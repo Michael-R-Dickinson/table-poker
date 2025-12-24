@@ -10,7 +10,11 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.michaeldickinson20i.tablepoker"
+      "bundleIdentifier": "com.michaeldickinson20i.tablepoker",
+      "bitcode": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +25,17 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.michaeldickinson20i.tablepoker"
+      "package": "com.michaeldickinson20i.tablepoker",
+      "permissions": [
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WAKE_LOCK",
+        "android.permission.BLUETOOTH"
+      ]
     },
     "web": {
       "output": "static",
@@ -40,7 +54,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "@config-plugins/react-native-webrtc"
     ],
     "experiments": {
       "typedRoutes": true,
@@ -49,10 +64,10 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "30caaf7d-a899-476f-97eb-90a2e9036a6b"
+        "projectId": "125235e1-86f6-4da4-9c57-8d1614c25179"
       }
     },
-    "owner": "michaeldickinson20i",
+    "owner": "asianmike",
     "updates": {
       "url": "https://u.expo.dev/30caaf7d-a899-476f-97eb-90a2e9036a6b"
     },
