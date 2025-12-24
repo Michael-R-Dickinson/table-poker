@@ -1,5 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
-import { RTCPeerConnection, RTCSessionDescription, RTCIceCandidate } from 'react-native-webrtc';
+import {
+  RTCPeerConnection,
+  RTCSessionDescription,
+  RTCIceCandidate,
+} from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
 
 const ICE_SERVERS = {
@@ -78,7 +82,10 @@ export function useWebRTCPlayer({
       console.log('Connection state changed:', peerConnection.connectionState);
       if (peerConnection.connectionState === 'connected') {
         setConnectionState('connected');
-      } else if (peerConnection.connectionState === 'failed' || peerConnection.connectionState === 'disconnected') {
+      } else if (
+        peerConnection.connectionState === 'failed' ||
+        peerConnection.connectionState === 'disconnected'
+      ) {
         setConnectionState(peerConnection.connectionState as ConnectionState);
         onDisconnected?.();
       } else if (peerConnection.connectionState === 'connecting') {
@@ -90,44 +97,45 @@ export function useWebRTCPlayer({
     return peerConnection;
   }, [sendSignalingMessage, onConnected, onDisconnected, onDataChannelMessage]);
 
-  const handleOffer = useCallback(async (offer: any) => {
-    console.log('Received offer from host');
+  const handleOffer = useCallback(
+    async (offer: any) => {
+      console.log('Received offer from host');
 
-    if (!peerConnectionRef.current) {
-      createPeerConnection();
-    }
+      if (!peerConnectionRef.current) {
+        createPeerConnection();
+      }
 
-    const peerConnection = peerConnectionRef.current;
-    if (!peerConnection) {
-      console.error('Failed to create peer connection');
-      return;
-    }
+      const peerConnection = peerConnectionRef.current;
+      if (!peerConnection) {
+        console.error('Failed to create peer connection');
+        return;
+      }
 
-    try {
-      setConnectionState('connecting');
+      try {
+        setConnectionState('connecting');
 
-      await peerConnection.setRemoteDescription(
-        new RTCSessionDescription(offer)
-      );
-      console.log('Remote description set');
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        console.log('Remote description set');
 
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      console.log('Local description set');
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        console.log('Local description set');
 
-      sendSignalingMessage({
-        type: 'answer',
-        payload: {
-          sdp: answer.sdp,
+        sendSignalingMessage({
           type: 'answer',
-        },
-      });
-      console.log('Answer sent to host');
-    } catch (err) {
-      console.error('Failed to handle offer:', err);
-      setConnectionState('failed');
-    }
-  }, [createPeerConnection, sendSignalingMessage]);
+          payload: {
+            sdp: answer.sdp,
+            type: 'answer',
+          },
+        });
+        console.log('Answer sent to host');
+      } catch (err) {
+        console.error('Failed to handle offer:', err);
+        setConnectionState('failed');
+      }
+    },
+    [createPeerConnection, sendSignalingMessage],
+  );
 
   const handleIceCandidate = useCallback(async (candidate: any) => {
     console.log('Received ICE candidate from host');
@@ -143,7 +151,7 @@ export function useWebRTCPlayer({
           candidate: candidate.candidate,
           sdpMLineIndex: candidate.sdpMLineIndex,
           sdpMid: candidate.sdpMid,
-        })
+        }),
       );
       console.log('ICE candidate added');
     } catch (err) {
@@ -151,21 +159,24 @@ export function useWebRTCPlayer({
     }
   }, []);
 
-  const handleSignalingMessage = useCallback((message: SignalingMessage) => {
-    switch (message.type) {
-      case 'offer':
-        handleOffer(message.payload);
-        break;
-      case 'ice-candidate':
-        handleIceCandidate(message.payload);
-        break;
-      case 'player-connected':
-        console.log('Player connection confirmed by host');
-        break;
-      default:
-        console.warn('Unknown message type:', message.type);
-    }
-  }, [handleOffer, handleIceCandidate]);
+  const handleSignalingMessage = useCallback(
+    (message: SignalingMessage) => {
+      switch (message.type) {
+        case 'offer':
+          handleOffer(message.payload);
+          break;
+        case 'ice-candidate':
+          handleIceCandidate(message.payload);
+          break;
+        case 'player-connected':
+          console.log('Player connection confirmed by host');
+          break;
+        default:
+          console.warn('Unknown message type:', message.type);
+      }
+    },
+    [handleOffer, handleIceCandidate],
+  );
 
   const sendToHost = useCallback((data: any) => {
     if (dataChannelRef.current?.readyState === 'open') {

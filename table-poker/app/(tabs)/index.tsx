@@ -16,7 +16,8 @@ export default function HomeScreen() {
           source={require('@/assets/images/partial-react-logo.png')}
           style={styles.reactLogo}
         />
-      }>
+      }
+    >
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Poker Home Game</ThemedText>
         <HelloWave />
@@ -25,36 +26,22 @@ export default function HomeScreen() {
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Start Playing</ThemedText>
 
-        <ThemedText>
-          Host a new game or join an existing one with a game code
-        </ThemedText>
+        <ThemedText>Host a new game or join an existing one with a game code</ThemedText>
 
         <View style={styles.buttonContainer}>
-          <Button
-            title="Host Game"
-            onPress={() => router.push('/host')}
-          />
+          <Button title="Host Game" onPress={() => router.push('/host')} />
         </View>
 
         <View style={styles.buttonContainer}>
-          <Button
-            title="Join Game"
-            onPress={() => router.push('/join')}
-          />
+          <Button title="Join Game" onPress={() => router.push('/join')} />
         </View>
       </ThemedView>
 
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">How it works</ThemedText>
-        <ThemedText>
-          1. Host creates a game and shares the game code
-        </ThemedText>
-        <ThemedText>
-          2. Players join using the game code
-        </ThemedText>
-        <ThemedText>
-          3. Direct peer-to-peer connection established via WebRTC
-        </ThemedText>
+        <ThemedText>1. Host creates a game and shares the game code</ThemedText>
+        <ThemedText>2. Players join using the game code</ThemedText>
+        <ThemedText>3. Direct peer-to-peer connection established via WebRTC</ThemedText>
       </ThemedView>
     </ParallaxScrollView>
   );

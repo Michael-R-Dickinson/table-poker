@@ -1,4 +1,9 @@
-export type SignalingMessageType = 'join' | 'offer' | 'answer' | 'ice-candidate' | 'player-connected';
+export type SignalingMessageType =
+  | 'join'
+  | 'offer'
+  | 'answer'
+  | 'ice-candidate'
+  | 'player-connected';
 
 export interface SignalingMessage {
   type: SignalingMessageType;

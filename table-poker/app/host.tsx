@@ -11,11 +11,12 @@ export default function HostScreen() {
   const [hostName, setHostName] = useState('');
   const [isHosting, setIsHosting] = useState(false);
 
-  const { connectionState, error, connect, disconnect, sendMessage } = useSignalingConnection({
-    onMessage: (message) => {
-      handleSignalingMessage(message);
-    },
-  });
+  const { connectionState, error, connect, disconnect, sendMessage } =
+    useSignalingConnection({
+      onMessage: (message) => {
+        handleSignalingMessage(message);
+      },
+    });
 
   const {
     connectedPlayers,
@@ -94,10 +95,7 @@ export default function HostScreen() {
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="title">Host Game</ThemedText>
-        <Button
-          title="Back"
-          onPress={() => router.back()}
-        />
+        <Button title="Back" onPress={() => router.back()} />
       </ThemedView>
 
       {!isHosting ? (
@@ -122,10 +120,7 @@ export default function HostScreen() {
             autoCapitalize="characters"
           />
 
-          <Button
-            title="Start Hosting"
-            onPress={handleStartHosting}
-          />
+          <Button title="Start Hosting" onPress={handleStartHosting} />
         </ThemedView>
       ) : (
         <ThemedView style={styles.gameContainer}>
@@ -134,15 +129,13 @@ export default function HostScreen() {
               <View
                 style={[
                   styles.statusIndicator,
-                  { backgroundColor: getConnectionStatusColor() }
+                  { backgroundColor: getConnectionStatusColor() },
                 ]}
               />
               <ThemedText>Status: {connectionState}</ThemedText>
             </View>
 
-            {error && (
-              <ThemedText style={styles.errorText}>Error: {error}</ThemedText>
-            )}
+            {error && <ThemedText style={styles.errorText}>Error: {error}</ThemedText>}
           </ThemedView>
 
           <ThemedView style={styles.gameCodeContainer}>
@@ -184,11 +177,7 @@ export default function HostScreen() {
               disabled={connectedPlayers.length === 0}
             />
             <View style={styles.buttonSpacer} />
-            <Button
-              title="Stop Hosting"
-              onPress={handleStopHosting}
-              color="#F44336"
-            />
+            <Button title="Stop Hosting" onPress={handleStopHosting} color="#F44336" />
           </ThemedView>
         </ThemedView>
       )}

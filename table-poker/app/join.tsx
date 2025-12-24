@@ -12,7 +12,13 @@ export default function JoinScreen() {
   const [isJoining, setIsJoining] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
 
-  const { connectionState: signalingState, error, connect, disconnect, sendMessage } = useSignalingConnection({
+  const {
+    connectionState: signalingState,
+    error,
+    connect,
+    disconnect,
+    sendMessage,
+  } = useSignalingConnection({
     onMessage: (message) => {
       handleSignalingMessage(message);
     },
@@ -114,10 +120,7 @@ export default function JoinScreen() {
     <ThemedView style={styles.container}>
       <ThemedView style={styles.header}>
         <ThemedText type="title">Join Game</ThemedText>
-        <Button
-          title="Back"
-          onPress={() => router.back()}
-        />
+        <Button title="Back" onPress={() => router.back()} />
       </ThemedView>
 
       {!isJoining ? (
@@ -142,10 +145,7 @@ export default function JoinScreen() {
             autoCapitalize="characters"
           />
 
-          <Button
-            title="Join Game"
-            onPress={handleJoinGame}
-          />
+          <Button title="Join Game" onPress={handleJoinGame} />
         </ThemedView>
       ) : (
         <ThemedView style={styles.gameContainer}>
@@ -156,7 +156,7 @@ export default function JoinScreen() {
               <View
                 style={[
                   styles.statusIndicator,
-                  { backgroundColor: getSignalingStatusColor() }
+                  { backgroundColor: getSignalingStatusColor() },
                 ]}
               />
               <ThemedText>Signaling: {signalingState}</ThemedText>
@@ -166,15 +166,13 @@ export default function JoinScreen() {
               <View
                 style={[
                   styles.statusIndicator,
-                  { backgroundColor: getWebRTCStatusColor() }
+                  { backgroundColor: getWebRTCStatusColor() },
                 ]}
               />
               <ThemedText>WebRTC: {webrtcState}</ThemedText>
             </View>
 
-            {error && (
-              <ThemedText style={styles.errorText}>Error: {error}</ThemedText>
-            )}
+            {error && <ThemedText style={styles.errorText}>Error: {error}</ThemedText>}
           </ThemedView>
 
           <ThemedView style={styles.gameInfoContainer}>
@@ -189,18 +187,14 @@ export default function JoinScreen() {
 
           {isJoined ? (
             <ThemedView style={styles.connectedContainer}>
-              <ThemedText style={styles.connectedText}>
-                Connected to Host!
-              </ThemedText>
+              <ThemedText style={styles.connectedText}>Connected to Host!</ThemedText>
               <ThemedText style={styles.instructionText}>
                 Waiting for game to start...
               </ThemedText>
             </ThemedView>
           ) : (
             <ThemedView style={styles.connectingContainer}>
-              <ThemedText style={styles.connectingText}>
-                Connecting to host...
-              </ThemedText>
+              <ThemedText style={styles.connectingText}>Connecting to host...</ThemedText>
               <ThemedText style={styles.instructionText}>
                 Please wait while we establish connection
               </ThemedText>
@@ -208,17 +202,9 @@ export default function JoinScreen() {
           )}
 
           <ThemedView style={styles.actionsContainer}>
-            <Button
-              title="Test Send"
-              onPress={handleTestSend}
-              disabled={!isJoined}
-            />
+            <Button title="Test Send" onPress={handleTestSend} disabled={!isJoined} />
             <View style={styles.buttonSpacer} />
-            <Button
-              title="Leave Game"
-              onPress={handleLeaveGame}
-              color="#F44336"
-            />
+            <Button title="Leave Game" onPress={handleLeaveGame} color="#F44336" />
           </ThemedView>
         </ThemedView>
       )}
