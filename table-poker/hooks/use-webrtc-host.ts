@@ -53,7 +53,7 @@ export function useWebRTCHost({
         connectionState: 'connecting',
       };
 
-      dataChannel.addEventListener('open', () => {
+      (dataChannel as any).addEventListener('open', () => {
         console.log(`Data channel opened for player: ${playerId}`);
         peerInfo.connectionState = 'connected';
         setConnectedPlayers((prev) => [...prev, playerId]);
