@@ -1,0 +1,33 @@
+**/.terraform/*
+**/.terraform.lock.hcl
+
+# State files 
+**/*.tfstate
+**/*.tfstate.*
+**/terraform.tfstate.d/*
+
+# Crash logs
+crash.log
+crash.*.log
+
+# CLI config / credentials files 
+.terraformrc
+terraform.rc
+
+# TF vars files that often contain secrets (prefer not to commit)
+**/*.tfvars
+**/*.tfvars.json
+
+# Override files 
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Plan output files
+**/*.tfplan
+**/*.plan
+
+# Local directories commonly used for modules/build output
+**/.terragrunt-cache/*
+**/.terraform.d/*
