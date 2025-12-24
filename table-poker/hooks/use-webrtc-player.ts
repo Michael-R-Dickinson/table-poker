@@ -33,34 +33,34 @@ export function useWebRTCPlayer({
 
     const peerConnection = new RTCPeerConnection(ICE_SERVERS);
 
-    peerConnection.ondatachannel = (event: any) => {
+    (peerConnection as any).addEventListener('datachannel', (event: any) => {
       console.log('Data channel received from host');
       const dataChannel = event.channel;
       dataChannelRef.current = dataChannel;
 
-      dataChannel.onopen = () => {
+      (dataChannel as any).addEventListener('open', () => {
         console.log('Data channel opened');
         setConnectionState('connected');
         onConnected?.();
-      };
+      });
 
-      dataChannel.onclose = () => {
+      (dataChannel as any).addEventListener('close', () => {
         console.log('Data channel closed');
         setConnectionState('disconnected');
         onDisconnected?.();
-      };
+      });
 
-      dataChannel.onmessage = (event: any) => {
+      (dataChannel as any).addEventListener('message', (event: any) => {
         try {
           const data = JSON.parse(event.data);
           onDataChannelMessage?.(data);
         } catch (err) {
           console.error('Failed to parse data channel message:', err);
         }
-      };
-    };
+      });
+    });
 
-    peerConnection.onicecandidate = (event: any) => {
+    (peerConnection as any).addEventListener('icecandidate', (event: any) => {
       if (event.candidate) {
         console.log('Sending ICE candidate to host');
         sendSignalingMessage({
@@ -72,9 +72,9 @@ export function useWebRTCPlayer({
           },
         });
       }
-    };
+    });
 
-    peerConnection.onconnectionstatechange = () => {
+    (peerConnection as any).addEventListener('connectionstatechange', () => {
       console.log('Connection state changed:', peerConnection.connectionState);
       if (peerConnection.connectionState === 'connected') {
         setConnectionState('connected');
@@ -84,7 +84,7 @@ export function useWebRTCPlayer({
       } else if (peerConnection.connectionState === 'connecting') {
         setConnectionState('connecting');
       }
-    };
+    });
 
     peerConnectionRef.current = peerConnection;
     return peerConnection;
