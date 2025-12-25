@@ -31,10 +31,14 @@ export function useWebRTCPlayer({
 }: UseWebRTCPlayerProps) {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<any>(null);
+  const iceCandidateQueueRef = useRef<any[]>([]);
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
 
   const createPeerConnection = useCallback(() => {
     logger.info('Creating peer connection to host');
+
+    // Clear any queued ICE candidates from previous connection attempts
+    iceCandidateQueueRef.current = [];
 
     const peerConnection = new RTCPeerConnection(ICE_SERVERS);
 
@@ -118,6 +122,28 @@ export function useWebRTCPlayer({
         await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
         logger.info('Remote description set');
 
+        // Drain queued ICE candidates now that remote description is set
+        if (iceCandidateQueueRef.current.length > 0) {
+          logger.info(
+            `Adding ${iceCandidateQueueRef.current.length} queued ICE candidates`,
+          );
+          for (const candidate of iceCandidateQueueRef.current) {
+            try {
+              await peerConnection.addIceCandidate(
+                new RTCIceCandidate({
+                  candidate: candidate.candidate,
+                  sdpMLineIndex: candidate.sdpMLineIndex,
+                  sdpMid: candidate.sdpMid,
+                }),
+              );
+            } catch (err) {
+              logger.error('Failed to add queued ICE candidate:', err);
+            }
+          }
+          iceCandidateQueueRef.current = [];
+          logger.info('Queued ICE candidates processed');
+        }
+
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
         logger.info('Local description set');
@@ -142,7 +168,8 @@ export function useWebRTCPlayer({
     logger.info('Received ICE candidate from host');
 
     if (!peerConnectionRef.current) {
-      logger.error('No peer connection available');
+      logger.info('Queueing ICE candidate until peer connection is ready');
+      iceCandidateQueueRef.current.push(candidate);
       return;
     }
 
@@ -199,6 +226,7 @@ export function useWebRTCPlayer({
     if (dataChannelRef.current) {
       dataChannelRef.current = null;
     }
+    iceCandidateQueueRef.current = [];
     setConnectionState('disconnected');
   }, []);
 
