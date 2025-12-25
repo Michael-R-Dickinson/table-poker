@@ -6,6 +6,7 @@ import { useSignalingConnection } from '@/hooks/use-signaling-connection';
 import { useWebRTCPlayer } from '@/hooks/use-webrtc-player';
 import { router } from 'expo-router';
 import { logger } from '@/utils/logger';
+import { HOST_PLAYER_ID } from '@/constants/signaling';
 
 export default function JoinScreen() {
   const [gameCode, setGameCode] = useState('');
@@ -48,6 +49,13 @@ export default function JoinScreen() {
   const handleJoinGame = () => {
     if (!playerName.trim()) {
       alert('Please enter your name');
+      return;
+    }
+
+    if (playerName.toUpperCase() === HOST_PLAYER_ID) {
+      alert(
+        `Cannot use "${HOST_PLAYER_ID}" as player name - this is reserved for the host`,
+      );
       return;
     }
 

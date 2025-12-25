@@ -6,6 +6,7 @@ import { useSignalingConnection } from '@/hooks/use-signaling-connection';
 import { useWebRTCHost } from '@/hooks/use-webrtc-host';
 import { router } from 'expo-router';
 import { logger } from '@/utils/logger';
+import { HOST_PLAYER_ID } from '@/constants/signaling';
 
 export default function HostScreen() {
   const [gameCode, setGameCode] = useState('');
@@ -52,7 +53,7 @@ export default function HostScreen() {
     const code = gameCode || generateGameCode();
     setGameCode(code);
 
-    connect('HOST', code);
+    connect(HOST_PLAYER_ID, code);
     setIsHosting(true);
   };
 
@@ -105,7 +106,7 @@ export default function HostScreen() {
 
           <TextInput
             style={styles.input}
-            placeholder="Your Name"
+            placeholder="Your Display Name"
             placeholderTextColor="#999"
             value={hostName}
             onChangeText={setHostName}

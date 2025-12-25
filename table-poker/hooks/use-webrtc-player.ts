@@ -6,6 +6,7 @@ import {
 } from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
 import { logger } from '@/utils/logger';
+import { HOST_PLAYER_ID } from '@/constants/signaling';
 
 const ICE_SERVERS = {
   iceServers: [
@@ -74,7 +75,7 @@ export function useWebRTCPlayer({
         logger.info('Sending ICE candidate to host');
         sendSignalingMessage({
           type: 'ice-candidate',
-          targetId: 'HOST',
+          targetId: HOST_PLAYER_ID,
           payload: {
             candidate: event.candidate.candidate,
             sdpMLineIndex: event.candidate.sdpMLineIndex,
@@ -151,7 +152,7 @@ export function useWebRTCPlayer({
 
         sendSignalingMessage({
           type: 'answer',
-          targetId: 'HOST',
+          targetId: HOST_PLAYER_ID,
           payload: {
             sdp: answer.sdp,
             type: 'answer',
