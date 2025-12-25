@@ -131,11 +131,20 @@ def handle_message(event, connection_id):
 
         game_connections = response.get('Items', [])
 
-        # Special handling for 'join' message - send to host (oldest connection in game)
+        # Special handling for 'join' message - send to HOST
         if message_type == 'join':
-            # Find host (connection with oldest timestamp)
-            host_connection = min(game_connections, key=lambda x: x.get('connectedAt', ''))
-            target_connection_id = host_connection.get('connectionId')
+            # Find host (connection with playerId='HOST')
+            target_connection_id = None
+            for item in game_connections:
+                if item.get('playerId') == 'HOST':
+                    target_connection_id = item.get('connectionId')
+                    break
+
+            if not target_connection_id:
+                return {
+                    'statusCode': 404,
+                    'body': json.dumps({'error': 'Host not found in game'})
+                }
 
             if target_connection_id == connection_id:
                 return {

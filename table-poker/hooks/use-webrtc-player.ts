@@ -74,7 +74,7 @@ export function useWebRTCPlayer({
         logger.info('Sending ICE candidate to host');
         sendSignalingMessage({
           type: 'ice-candidate',
-          targetId: 'host',
+          targetId: 'HOST',
           payload: {
             candidate: event.candidate.candidate,
             sdpMLineIndex: event.candidate.sdpMLineIndex,
@@ -151,7 +151,7 @@ export function useWebRTCPlayer({
 
         sendSignalingMessage({
           type: 'answer',
-          targetId: 'host',
+          targetId: 'HOST',
           payload: {
             sdp: answer.sdp,
             type: 'answer',

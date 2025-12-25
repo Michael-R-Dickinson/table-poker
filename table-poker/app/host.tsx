@@ -52,7 +52,7 @@ export default function HostScreen() {
     const code = gameCode || generateGameCode();
     setGameCode(code);
 
-    connect(hostName, code);
+    connect('HOST', code);
     setIsHosting(true);
   };
 
