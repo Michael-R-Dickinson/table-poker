@@ -5,6 +5,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useSignalingConnection } from '@/hooks/use-signaling-connection';
 import { useWebRTCHost } from '@/hooks/use-webrtc-host';
 import { router } from 'expo-router';
+import { logger } from '@/utils/logger';
 
 export default function HostScreen() {
   const [gameCode, setGameCode] = useState('');
@@ -26,13 +27,13 @@ export default function HostScreen() {
   } = useWebRTCHost({
     sendSignalingMessage: sendMessage,
     onPlayerConnected: (playerId) => {
-      console.log(`Player connected: ${playerId}`);
+      logger.info(`Player connected: ${playerId}`);
     },
     onPlayerDisconnected: (playerId) => {
-      console.log(`Player disconnected: ${playerId}`);
+      logger.info(`Player disconnected: ${playerId}`);
     },
     onDataChannelMessage: (playerId, data) => {
-      console.log(`Received from ${playerId}:`, data);
+      logger.info(`Received from ${playerId}:`, data);
     },
   });
 

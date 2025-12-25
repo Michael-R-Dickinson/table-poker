@@ -5,6 +5,7 @@ import {
   RTCIceCandidate,
 } from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
+import { logger } from '@/utils/logger';
 
 const ICE_SERVERS = {
   iceServers: [
@@ -33,23 +34,23 @@ export function useWebRTCPlayer({
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
 
   const createPeerConnection = useCallback(() => {
-    console.log('Creating peer connection to host');
+    logger.info('Creating peer connection to host');
 
     const peerConnection = new RTCPeerConnection(ICE_SERVERS);
 
     (peerConnection as any).addEventListener('datachannel', (event: any) => {
-      console.log('Data channel received from host');
+      logger.info('Data channel received from host');
       const dataChannel = event.channel;
       dataChannelRef.current = dataChannel;
 
       (dataChannel as any).addEventListener('open', () => {
-        console.log('Data channel opened');
+        logger.info('Data channel opened');
         setConnectionState('connected');
         onConnected?.();
       });
 
       (dataChannel as any).addEventListener('close', () => {
-        console.log('Data channel closed');
+        logger.info('Data channel closed');
         setConnectionState('disconnected');
         onDisconnected?.();
       });
@@ -59,14 +60,14 @@ export function useWebRTCPlayer({
           const data = JSON.parse(event.data);
           onDataChannelMessage?.(data);
         } catch (err) {
-          console.error('Failed to parse data channel message:', err);
+          logger.error('Failed to parse data channel message:', err);
         }
       });
     });
 
     (peerConnection as any).addEventListener('icecandidate', (event: any) => {
       if (event.candidate) {
-        console.log('Sending ICE candidate to host');
+        logger.info('Sending ICE candidate to host');
         sendSignalingMessage({
           type: 'ice-candidate',
           payload: {
@@ -79,7 +80,7 @@ export function useWebRTCPlayer({
     });
 
     (peerConnection as any).addEventListener('connectionstatechange', () => {
-      console.log('Connection state changed:', peerConnection.connectionState);
+      logger.info('Connection state changed:', peerConnection.connectionState);
       if (peerConnection.connectionState === 'connected') {
         setConnectionState('connected');
       } else if (
@@ -99,7 +100,7 @@ export function useWebRTCPlayer({
 
   const handleOffer = useCallback(
     async (offer: any) => {
-      console.log('Received offer from host');
+      logger.info('Received offer from host');
 
       if (!peerConnectionRef.current) {
         createPeerConnection();
@@ -107,7 +108,7 @@ export function useWebRTCPlayer({
 
       const peerConnection = peerConnectionRef.current;
       if (!peerConnection) {
-        console.error('Failed to create peer connection');
+        logger.error('Failed to create peer connection');
         return;
       }
 
@@ -115,11 +116,11 @@ export function useWebRTCPlayer({
         setConnectionState('connecting');
 
         await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-        console.log('Remote description set');
+        logger.info('Remote description set');
 
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
-        console.log('Local description set');
+        logger.info('Local description set');
 
         sendSignalingMessage({
           type: 'answer',
@@ -128,9 +129,9 @@ export function useWebRTCPlayer({
             type: 'answer',
           },
         });
-        console.log('Answer sent to host');
+        logger.info('Answer sent to host');
       } catch (err) {
-        console.error('Failed to handle offer:', err);
+        logger.error('Failed to handle offer:', err);
         setConnectionState('failed');
       }
     },
@@ -138,10 +139,10 @@ export function useWebRTCPlayer({
   );
 
   const handleIceCandidate = useCallback(async (candidate: any) => {
-    console.log('Received ICE candidate from host');
+    logger.info('Received ICE candidate from host');
 
     if (!peerConnectionRef.current) {
-      console.error('No peer connection available');
+      logger.error('No peer connection available');
       return;
     }
 
@@ -153,9 +154,9 @@ export function useWebRTCPlayer({
           sdpMid: candidate.sdpMid,
         }),
       );
-      console.log('ICE candidate added');
+      logger.info('ICE candidate added');
     } catch (err) {
-      console.error('Failed to add ICE candidate:', err);
+      logger.error('Failed to add ICE candidate:', err);
     }
   }, []);
 
@@ -169,10 +170,10 @@ export function useWebRTCPlayer({
           handleIceCandidate(message.payload);
           break;
         case 'player-connected':
-          console.log('Player connection confirmed by host');
+          logger.info('Player connection confirmed by host');
           break;
         default:
-          console.warn('Unknown message type:', message.type);
+          logger.warn('Unknown message type:', message.type);
       }
     },
     [handleOffer, handleIceCandidate],
@@ -183,10 +184,10 @@ export function useWebRTCPlayer({
       try {
         dataChannelRef.current.send(JSON.stringify(data));
       } catch (err) {
-        console.error('Failed to send to host:', err);
+        logger.error('Failed to send to host:', err);
       }
     } else {
-      console.error('Data channel is not open');
+      logger.error('Data channel is not open');
     }
   }, []);
 

@@ -5,6 +5,7 @@ import { ThemedView } from '@/components/themed-view';
 import { useSignalingConnection } from '@/hooks/use-signaling-connection';
 import { useWebRTCPlayer } from '@/hooks/use-webrtc-player';
 import { router } from 'expo-router';
+import { logger } from '@/utils/logger';
 
 export default function JoinScreen() {
   const [gameCode, setGameCode] = useState('');
@@ -32,15 +33,15 @@ export default function JoinScreen() {
   } = useWebRTCPlayer({
     sendSignalingMessage: sendMessage,
     onConnected: () => {
-      console.log('Connected to host via WebRTC');
+      logger.info('Connected to host via WebRTC');
       setIsJoined(true);
     },
     onDisconnected: () => {
-      console.log('Disconnected from host');
+      logger.info('Disconnected from host');
       setIsJoined(false);
     },
     onDataChannelMessage: (data) => {
-      console.log('Received from host:', data);
+      logger.info('Received from host:', data);
     },
   });
 

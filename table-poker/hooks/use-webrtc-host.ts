@@ -6,6 +6,7 @@ import {
   mediaDevices,
 } from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
+import { logger } from '@/utils/logger';
 
 interface PeerConnectionInfo {
   connection: RTCPeerConnection;
@@ -39,7 +40,7 @@ export function useWebRTCHost({
 
   const createPeerConnection = useCallback(
     (playerId: string) => {
-      console.log(`Creating peer connection for player: ${playerId}`);
+      logger.info(`Creating peer connection for player: ${playerId}`);
 
       const peerConnection = new RTCPeerConnection(ICE_SERVERS);
       const dataChannel = peerConnection.createDataChannel('game-data', {
@@ -54,14 +55,14 @@ export function useWebRTCHost({
       };
 
       (dataChannel as any).addEventListener('open', () => {
-        console.log(`Data channel opened for player: ${playerId}`);
+        logger.info(`Data channel opened for player: ${playerId}`);
         peerInfo.connectionState = 'connected';
         setConnectedPlayers((prev) => [...prev, playerId]);
         onPlayerConnected?.(playerId);
       });
 
       (dataChannel as any).addEventListener('close', () => {
-        console.log(`Data channel closed for player: ${playerId}`);
+        logger.info(`Data channel closed for player: ${playerId}`);
         peerInfo.connectionState = 'disconnected';
         setConnectedPlayers((prev) => prev.filter((id) => id !== playerId));
         onPlayerDisconnected?.(playerId);
@@ -72,13 +73,13 @@ export function useWebRTCHost({
           const data = JSON.parse(event.data);
           onDataChannelMessage?.(playerId, data);
         } catch (err) {
-          console.error(`Failed to parse data channel message from ${playerId}:`, err);
+          logger.error(`Failed to parse data channel message from ${playerId}:`, err);
         }
       });
 
       (peerConnection as any).addEventListener('icecandidate', (event: any) => {
         if (event.candidate) {
-          console.log(`Sending ICE candidate to player: ${playerId}`);
+          logger.info(`Sending ICE candidate to player: ${playerId}`);
           sendSignalingMessage({
             type: 'ice-candidate',
             targetId: playerId,
@@ -92,7 +93,7 @@ export function useWebRTCHost({
       });
 
       (peerConnection as any).addEventListener('connectionstatechange', () => {
-        console.log(
+        logger.info(
           `Connection state changed for ${playerId}:`,
           peerConnection.connectionState,
         );
@@ -114,10 +115,10 @@ export function useWebRTCHost({
 
   const handlePlayerJoin = useCallback(
     async (playerId: string) => {
-      console.log(`Player joining: ${playerId}`);
+      logger.info(`Player joining: ${playerId}`);
 
       if (peerConnectionsRef.current.has(playerId)) {
-        console.log(`Player ${playerId} already has a connection`);
+        logger.info(`Player ${playerId} already has a connection`);
         return;
       }
 
@@ -127,7 +128,7 @@ export function useWebRTCHost({
         const offer = await peerInfo.connection.createOffer();
         await peerInfo.connection.setLocalDescription(offer);
 
-        console.log(`Sending offer to player: ${playerId}`);
+        logger.info(`Sending offer to player: ${playerId}`);
         sendSignalingMessage({
           type: 'offer',
           targetId: playerId,
@@ -137,7 +138,7 @@ export function useWebRTCHost({
           },
         });
       } catch (err) {
-        console.error(`Failed to create offer for ${playerId}:`, err);
+        logger.error(`Failed to create offer for ${playerId}:`, err);
         peerConnectionsRef.current.delete(playerId);
       }
     },
@@ -145,28 +146,28 @@ export function useWebRTCHost({
   );
 
   const handleAnswer = useCallback(async (playerId: string, answer: any) => {
-    console.log(`Received answer from player: ${playerId}`);
+    logger.info(`Received answer from player: ${playerId}`);
 
     const peerInfo = peerConnectionsRef.current.get(playerId);
     if (!peerInfo) {
-      console.error(`No peer connection found for player: ${playerId}`);
+      logger.error(`No peer connection found for player: ${playerId}`);
       return;
     }
 
     try {
       await peerInfo.connection.setRemoteDescription(new RTCSessionDescription(answer));
-      console.log(`Remote description set for player: ${playerId}`);
+      logger.info(`Remote description set for player: ${playerId}`);
     } catch (err) {
-      console.error(`Failed to set remote description for ${playerId}:`, err);
+      logger.error(`Failed to set remote description for ${playerId}:`, err);
     }
   }, []);
 
   const handleIceCandidate = useCallback(async (playerId: string, candidate: any) => {
-    console.log(`Received ICE candidate from player: ${playerId}`);
+    logger.info(`Received ICE candidate from player: ${playerId}`);
 
     const peerInfo = peerConnectionsRef.current.get(playerId);
     if (!peerInfo) {
-      console.error(`No peer connection found for player: ${playerId}`);
+      logger.error(`No peer connection found for player: ${playerId}`);
       return;
     }
 
@@ -178,9 +179,9 @@ export function useWebRTCHost({
           sdpMid: candidate.sdpMid,
         }),
       );
-      console.log(`ICE candidate added for player: ${playerId}`);
+      logger.info(`ICE candidate added for player: ${playerId}`);
     } catch (err) {
-      console.error(`Failed to add ICE candidate for ${playerId}:`, err);
+      logger.error(`Failed to add ICE candidate for ${playerId}:`, err);
     }
   }, []);
 
@@ -188,7 +189,7 @@ export function useWebRTCHost({
     (message: SignalingMessage) => {
       const senderId = message.senderId;
       if (!senderId) {
-        console.error('Received message without senderId');
+        logger.error('Received message without senderId');
         return;
       }
 
@@ -203,7 +204,7 @@ export function useWebRTCHost({
           handleIceCandidate(senderId, message.payload);
           break;
         default:
-          console.warn('Unknown message type:', message.type);
+          logger.warn('Unknown message type:', message.type);
       }
     },
     [handlePlayerJoin, handleAnswer, handleIceCandidate],
@@ -216,7 +217,7 @@ export function useWebRTCHost({
         try {
           peerInfo.dataChannel.send(message);
         } catch (err) {
-          console.error(`Failed to send to player ${playerId}:`, err);
+          logger.error(`Failed to send to player ${playerId}:`, err);
         }
       }
     });
@@ -228,10 +229,10 @@ export function useWebRTCHost({
       try {
         peerInfo.dataChannel.send(JSON.stringify(data));
       } catch (err) {
-        console.error(`Failed to send to player ${playerId}:`, err);
+        logger.error(`Failed to send to player ${playerId}:`, err);
       }
     } else {
-      console.error(`Player ${playerId} is not connected or data channel not open`);
+      logger.error(`Player ${playerId} is not connected or data channel not open`);
     }
   }, []);
 
