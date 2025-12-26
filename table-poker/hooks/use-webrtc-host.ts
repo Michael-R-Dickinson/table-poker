@@ -38,6 +38,23 @@ export function useWebRTCHost({
   const peerConnectionsRef = useRef<Map<string, PeerConnectionInfo>>(new Map());
   const [connectedPlayers, setConnectedPlayers] = useState<string[]>([]);
 
+  const handleConnect = useCallback(
+    (playerId: string) => {
+      setConnectedPlayers((prev) => [...prev, playerId]);
+      onPlayerConnected?.(playerId);
+    },
+    [onPlayerConnected],
+  );
+
+  const handleDisconnect = useCallback(
+    (playerId: string) => {
+      peerConnectionsRef.current.delete(playerId);
+      setConnectedPlayers((prev) => prev.filter((id) => id !== playerId));
+      onPlayerDisconnected?.(playerId);
+    },
+    [onPlayerDisconnected],
+  );
+
   const createPeerConnection = useCallback(
     (playerId: string) => {
       logger.info(`Creating peer connection for player: ${playerId}`);
@@ -57,15 +74,13 @@ export function useWebRTCHost({
       (dataChannel as any).addEventListener('open', () => {
         logger.info(`Data channel opened for player: ${playerId}`);
         peerInfo.connectionState = 'connected';
-        setConnectedPlayers((prev) => [...prev, playerId]);
-        onPlayerConnected?.(playerId);
+        handleConnect(playerId);
       });
 
       (dataChannel as any).addEventListener('close', () => {
         logger.info(`Data channel closed for player: ${playerId}`);
         peerInfo.connectionState = 'disconnected';
-        setConnectedPlayers((prev) => prev.filter((id) => id !== playerId));
-        onPlayerDisconnected?.(playerId);
+        handleDisconnect(playerId);
       });
 
       (dataChannel as any).addEventListener('message', (event: any) => {
@@ -102,15 +117,14 @@ export function useWebRTCHost({
           peerConnection.connectionState === 'disconnected'
         ) {
           peerInfo.connectionState = peerConnection.connectionState;
-          setConnectedPlayers((prev) => prev.filter((id) => id !== playerId));
-          onPlayerDisconnected?.(playerId);
+          handleDisconnect(playerId);
         }
       });
 
       peerConnectionsRef.current.set(playerId, peerInfo);
       return peerInfo;
     },
-    [sendSignalingMessage, onPlayerConnected, onPlayerDisconnected, onDataChannelMessage],
+    [sendSignalingMessage, handleConnect, handleDisconnect, onDataChannelMessage],
   );
 
   const handlePlayerJoin = useCallback(
@@ -241,12 +255,10 @@ export function useWebRTCHost({
       const peerInfo = peerConnectionsRef.current.get(playerId);
       if (peerInfo) {
         peerInfo.connection.close();
-        peerConnectionsRef.current.delete(playerId);
-        setConnectedPlayers((prev) => prev.filter((id) => id !== playerId));
-        onPlayerDisconnected?.(playerId);
+        handleDisconnect(playerId);
       }
     },
-    [onPlayerDisconnected],
+    [handleDisconnect],
   );
 
   const cleanup = useCallback(() => {
