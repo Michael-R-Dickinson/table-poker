@@ -10,7 +10,7 @@ export interface PeerConnectionInfo {
   connection: RTCPeerConnection;
   dataChannel: any;
   playerId: string;
-  connectionState: 'connecting' | 'connected' | 'disconnected' | 'failed';
+  connectionState: 'connecting' | 'connected' | 'disconnected';
 }
 
 const ICE_SERVERS = {

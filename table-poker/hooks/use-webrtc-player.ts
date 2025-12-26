@@ -15,7 +15,7 @@ const ICE_SERVERS = {
   ],
 };
 
-type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'failed';
+type ConnectionState = 'disconnected' | 'connecting' | 'connected';
 
 interface UseWebRTCPlayerProps {
   sendSignalingMessage: (message: Omit<SignalingMessage, 'senderId'>) => void;
@@ -93,7 +93,7 @@ export function useWebRTCPlayer({
         peerConnection.connectionState === 'failed' ||
         peerConnection.connectionState === 'disconnected'
       ) {
-        setConnectionState(peerConnection.connectionState as ConnectionState);
+        setConnectionState('disconnected');
         onDisconnected?.();
       } else if (peerConnection.connectionState === 'connecting') {
         setConnectionState('connecting');
@@ -161,7 +161,7 @@ export function useWebRTCPlayer({
         logger.info('Answer sent to host');
       } catch (err) {
         logger.error('Failed to handle offer:', err);
-        setConnectionState('failed');
+        setConnectionState('disconnected');
       }
     },
     [createPeerConnection, sendSignalingMessage],

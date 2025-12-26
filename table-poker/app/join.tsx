@@ -123,7 +123,7 @@ export default function JoinScreen() {
         return '#4CAF50';
       case 'connecting':
         return '#FF9800';
-      case 'failed':
+      case 'disconnected':
         return '#F44336';
       default:
         return '#9E9E9E';
