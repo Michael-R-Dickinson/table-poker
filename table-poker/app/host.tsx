@@ -38,6 +38,7 @@ export default function HostScreen() {
     },
   });
 
+  console.log('connected players state updated: ', connectedPlayers);
   const generateGameCode = () => {
     const code = Math.random().toString(36).substring(2, 8).toUpperCase();
     setGameCode(code);
@@ -141,8 +142,15 @@ export default function HostScreen() {
           </ThemedView>
 
           <ThemedView style={styles.gameCodeContainer}>
-            <ThemedText type="subtitle">Game Code</ThemedText>
-            <ThemedText type="title" style={styles.gameCodeText}>
+            <ThemedText type="subtitle" darkColor="#000000ff" lightColor="000000ff">
+              Game Code
+            </ThemedText>
+            <ThemedText
+              type="title"
+              darkColor="#000000ff"
+              lightColor="000000ff"
+              style={styles.gameCodeText}
+            >
               {gameCode}
             </ThemedText>
             <ThemedText style={styles.instructionText}>
@@ -177,6 +185,7 @@ export default function HostScreen() {
               title="Test Broadcast"
               onPress={handleTestBroadcast}
               disabled={connectedPlayers.length === 0}
+              color="#2196F3"
             />
             <View style={styles.buttonSpacer} />
             <Button title="Stop Hosting" onPress={handleStopHosting} color="#F44336" />
@@ -228,10 +237,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   gameCodeText: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: 'bold',
     letterSpacing: 8,
     marginVertical: 10,
+    padding: 10,
   },
   instructionText: {
     fontSize: 14,
