@@ -90,6 +90,12 @@ export function createPeerConnection({
       peerInfo.connectionState = 'connected';
     }
 
+    if (peerConnection.connectionState === 'failed') {
+      logger.info(`Data channel closed via failiure for player: ${playerId}`);
+      peerInfo.connectionState = 'disconnected';
+      onDataChannelClose(playerId);
+    }
+
     onConnectionStateChange(playerId, peerConnection.connectionState);
   });
 
