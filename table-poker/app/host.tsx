@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, Button, TextInput, FlatList } from 'react-native';
+import { StyleSheet, View, Button, FlatList } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSignalingConnection } from '@/hooks/use-signaling-connection';
@@ -10,8 +10,6 @@ import { HOST_PLAYER_ID } from '@/constants/signaling';
 
 export default function HostScreen() {
   const [gameCode, setGameCode] = useState('');
-  const [hostName, setHostName] = useState('');
-  const [isHosting, setIsHosting] = useState(false);
 
   const { connectionState, error, connect, disconnect, sendMessage } =
     useSignalingConnection({
@@ -45,23 +43,10 @@ export default function HostScreen() {
     return code;
   };
 
-  const handleStartHosting = () => {
-    if (!hostName.trim()) {
-      alert('Please enter your name');
-      return;
-    }
-
-    const code = gameCode || generateGameCode();
-    setGameCode(code);
-
-    connect(HOST_PLAYER_ID, code);
-    setIsHosting(true);
-  };
-
   const handleStopHosting = () => {
     disconnect();
     cleanupWebRTC();
-    setIsHosting(false);
+    router.back();
   };
 
   const handleTestBroadcast = () => {
@@ -73,13 +58,14 @@ export default function HostScreen() {
   };
 
   useEffect(() => {
+    const code = generateGameCode();
+    connect(HOST_PLAYER_ID, code);
+
     return () => {
-      if (isHosting) {
-        disconnect();
-        cleanupWebRTC();
-      }
+      disconnect();
+      cleanupWebRTC();
     };
-  }, [isHosting]);
+  }, []);
 
   const getConnectionStatusColor = () => {
     switch (connectionState) {
@@ -101,97 +87,71 @@ export default function HostScreen() {
         <Button title="Back" onPress={() => router.back()} />
       </ThemedView>
 
-      {!isHosting ? (
-        <ThemedView style={styles.setupContainer}>
-          <ThemedText type="subtitle">Setup Your Game</ThemedText>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Your Display Name"
-            placeholderTextColor="#999"
-            value={hostName}
-            onChangeText={setHostName}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Game Code (leave empty to auto-generate)"
-            placeholderTextColor="#999"
-            value={gameCode}
-            onChangeText={setGameCode}
-            maxLength={6}
-            autoCapitalize="characters"
-          />
-
-          <Button title="Start Hosting" onPress={handleStartHosting} />
-        </ThemedView>
-      ) : (
-        <ThemedView style={styles.gameContainer}>
-          <ThemedView style={styles.statusContainer}>
-            <View style={styles.connectionStatus}>
-              <View
-                style={[
-                  styles.statusIndicator,
-                  { backgroundColor: getConnectionStatusColor() },
-                ]}
-              />
-              <ThemedText>Status: {connectionState}</ThemedText>
-            </View>
-
-            {error && <ThemedText style={styles.errorText}>Error: {error}</ThemedText>}
-          </ThemedView>
-
-          <ThemedView style={styles.gameCodeContainer}>
-            <ThemedText type="subtitle" darkColor="#000000ff" lightColor="000000ff">
-              Game Code
-            </ThemedText>
-            <ThemedText
-              type="title"
-              darkColor="#000000ff"
-              lightColor="000000ff"
-              style={styles.gameCodeText}
-            >
-              {gameCode}
-            </ThemedText>
-            <ThemedText style={styles.instructionText}>
-              Share this code with players to join
-            </ThemedText>
-          </ThemedView>
-
-          <ThemedView style={styles.playersContainer}>
-            <ThemedText type="subtitle">
-              Connected Players ({connectedPlayers.length})
-            </ThemedText>
-            {connectedPlayers.length === 0 ? (
-              <ThemedText style={styles.emptyText}>
-                Waiting for players to join...
-              </ThemedText>
-            ) : (
-              <FlatList
-                data={connectedPlayers}
-                keyExtractor={(item) => item}
-                renderItem={({ item }) => (
-                  <ThemedView style={styles.playerItem}>
-                    <View style={styles.playerDot} />
-                    <ThemedText>{item}</ThemedText>
-                  </ThemedView>
-                )}
-              />
-            )}
-          </ThemedView>
-
-          <ThemedView style={styles.actionsContainer}>
-            <Button
-              title="Test Broadcast"
-              onPress={handleTestBroadcast}
-              disabled={connectedPlayers.length === 0}
-              color="#2196F3"
+      <ThemedView style={styles.gameContainer}>
+        <ThemedView style={styles.statusContainer}>
+          <View style={styles.connectionStatus}>
+            <View
+              style={[
+                styles.statusIndicator,
+                { backgroundColor: getConnectionStatusColor() },
+              ]}
             />
-            <View style={styles.buttonSpacer} />
-            <Button title="Stop Hosting" onPress={handleStopHosting} color="#F44336" />
-          </ThemedView>
+            <ThemedText>Status: {connectionState}</ThemedText>
+          </View>
+
+          {error && <ThemedText style={styles.errorText}>Error: {error}</ThemedText>}
         </ThemedView>
-      )}
+
+        <ThemedView style={styles.gameCodeContainer}>
+          <ThemedText type="subtitle" darkColor="#000000ff" lightColor="000000ff">
+            Game Code
+          </ThemedText>
+          <ThemedText
+            type="title"
+            darkColor="#000000ff"
+            lightColor="000000ff"
+            style={styles.gameCodeText}
+          >
+            {gameCode}
+          </ThemedText>
+          <ThemedText style={styles.instructionText}>
+            Share this code with players to join
+          </ThemedText>
+        </ThemedView>
+
+        <ThemedView style={styles.playersContainer}>
+          <ThemedText type="subtitle">
+            Connected Players ({connectedPlayers.length})
+          </ThemedText>
+          {connectedPlayers.length === 0 ? (
+            <ThemedText style={styles.emptyText}>
+              Waiting for players to join...
+            </ThemedText>
+          ) : (
+            <FlatList
+              data={connectedPlayers}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <ThemedView style={styles.playerItem}>
+                  <View style={styles.playerDot} />
+                  <ThemedText>{item}</ThemedText>
+                </ThemedView>
+              )}
+            />
+          )}
+        </ThemedView>
+
+        <ThemedView style={styles.actionsContainer}>
+          <Button
+            title="Test Broadcast"
+            onPress={handleTestBroadcast}
+            disabled={connectedPlayers.length === 0}
+            color="#2196F3"
+          />
+          <View style={styles.buttonSpacer} />
+          <Button title="Stop Hosting" onPress={handleStopHosting} color="#F44336" />
+        </ThemedView>
+      </ThemedView>
     </ThemedView>
   );
 }
@@ -206,9 +166,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-  },
-  setupContainer: {
-    gap: 15,
   },
   gameContainer: {
     flex: 1,
@@ -275,16 +232,6 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     gap: 10,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    color: '#000',
-    backgroundColor: '#fff',
   },
   buttonSpacer: {
     width: 10,
