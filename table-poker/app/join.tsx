@@ -70,6 +70,11 @@ export default function JoinScreen() {
     setTimeout(() => {
       sendMessage({
         type: 'join',
+        targetId: HOST_PLAYER_ID,
+        payload: { playerName },
+      });
+      logger.info(`Sending join message for game: `, {
+        targetId: HOST_PLAYER_ID,
         payload: { playerName },
       });
     }, 1000);

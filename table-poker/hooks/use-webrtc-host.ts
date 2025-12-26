@@ -36,6 +36,7 @@ export function useWebRTCHost({
   onDataChannelMessage,
 }: UseWebRTCHostProps) {
   const peerConnectionsRef = useRef<Map<string, PeerConnectionInfo>>(new Map());
+  const iceCandidateQueuesRef = useRef<Map<string, any[]>>(new Map());
   const [connectedPlayers, setConnectedPlayers] = useState<string[]>([]);
 
   const handleConnect = useCallback(
@@ -49,6 +50,7 @@ export function useWebRTCHost({
   const handleDisconnect = useCallback(
     (playerId: string) => {
       peerConnectionsRef.current.delete(playerId);
+      iceCandidateQueuesRef.current.delete(playerId);
       setConnectedPlayers((prev) => prev.filter((id) => id !== playerId));
       onPlayerDisconnected?.(playerId);
     },
@@ -58,6 +60,9 @@ export function useWebRTCHost({
   const createPeerConnection = useCallback(
     (playerId: string) => {
       logger.info(`Creating peer connection for player: ${playerId}`);
+
+      // Initialize empty ICE candidate queue for this player
+      iceCandidateQueuesRef.current.set(playerId, []);
 
       const peerConnection = new RTCPeerConnection(ICE_SERVERS);
       const dataChannel = peerConnection.createDataChannel('game-data', {
@@ -171,6 +176,27 @@ export function useWebRTCHost({
     try {
       await peerInfo.connection.setRemoteDescription(new RTCSessionDescription(answer));
       logger.info(`Remote description set for player: ${playerId}`);
+
+      // Drain queued ICE candidates now that remote description is set
+      const queue = iceCandidateQueuesRef.current.get(playerId);
+      if (queue && queue.length > 0) {
+        logger.info(`Adding ${queue.length} queued ICE candidates for ${playerId}`);
+        for (const candidate of queue) {
+          try {
+            await peerInfo.connection.addIceCandidate(
+              new RTCIceCandidate({
+                candidate: candidate.candidate,
+                sdpMLineIndex: candidate.sdpMLineIndex,
+                sdpMid: candidate.sdpMid,
+              }),
+            );
+          } catch (err) {
+            logger.error(`Failed to add queued ICE candidate for ${playerId}:`, err);
+          }
+        }
+        iceCandidateQueuesRef.current.set(playerId, []);
+        logger.info(`Queued ICE candidates processed for ${playerId}`);
+      }
     } catch (err) {
       logger.error(`Failed to set remote description for ${playerId}:`, err);
     }
@@ -182,6 +208,17 @@ export function useWebRTCHost({
     const peerInfo = peerConnectionsRef.current.get(playerId);
     if (!peerInfo) {
       logger.error(`No peer connection found for player: ${playerId}`);
+      return;
+    }
+
+    // Queue ICE candidate if remote description is not yet set
+    if (!peerInfo.connection.remoteDescription) {
+      logger.info(
+        `Queueing ICE candidate for ${playerId} until remote description is set`,
+      );
+      const queue = iceCandidateQueuesRef.current.get(playerId) || [];
+      queue.push(candidate);
+      iceCandidateQueuesRef.current.set(playerId, queue);
       return;
     }
 
