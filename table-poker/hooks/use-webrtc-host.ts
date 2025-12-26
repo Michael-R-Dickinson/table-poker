@@ -116,13 +116,12 @@ export function useWebRTCHost({
         logger.info(
           `Connection state changed for ${playerId}:`,
           peerConnection.connectionState,
+          `Data channel state: ${dataChannel.readyState}`,
         );
-        if (
-          peerConnection.connectionState === 'failed' ||
-          peerConnection.connectionState === 'disconnected'
-        ) {
-          peerInfo.connectionState = peerConnection.connectionState;
-          handleDisconnect(playerId);
+
+        // Update internal state for monitoring
+        if (peerConnection.connectionState === 'connected') {
+          peerInfo.connectionState = 'connected';
         }
       });
 
