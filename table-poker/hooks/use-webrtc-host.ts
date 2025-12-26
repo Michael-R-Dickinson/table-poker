@@ -1,8 +1,8 @@
 import { useCallback, useRef, useState, useMemo } from 'react';
 import type { SignalingMessage } from '@/types/signaling';
 import { logger } from '@/utils/logger';
-import type { PeerConnectionInfo } from './webrtc/peer-connection-manager';
-import { createSignalingHandlers } from './webrtc/signaling-handlers';
+import type { PeerConnectionInfo } from './webrtc-host/peer-connection-manager';
+import { createSignalingHandlers } from './webrtc-host/signaling-handlers';
 
 interface UseWebRTCHostProps {
   sendSignalingMessage: (message: Omit<SignalingMessage, 'senderId'>) => void;
