@@ -1,26 +1,8 @@
-import { useCallback, useRef, useState } from 'react';
-import {
-  RTCPeerConnection,
-  RTCSessionDescription,
-  RTCIceCandidate,
-  mediaDevices,
-} from 'react-native-webrtc';
+import { useCallback, useRef, useState, useMemo } from 'react';
 import type { SignalingMessage } from '@/types/signaling';
 import { logger } from '@/utils/logger';
-
-interface PeerConnectionInfo {
-  connection: RTCPeerConnection;
-  dataChannel: any;
-  playerId: string;
-  connectionState: 'connecting' | 'connected' | 'disconnected' | 'failed';
-}
-
-const ICE_SERVERS = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ],
-};
+import type { PeerConnectionInfo } from './webrtc/peer-connection-manager';
+import { createSignalingHandlers } from './webrtc/signaling-handlers';
 
 interface UseWebRTCHostProps {
   sendSignalingMessage: (message: Omit<SignalingMessage, 'senderId'>) => void;
@@ -57,207 +39,17 @@ export function useWebRTCHost({
     [onPlayerDisconnected],
   );
 
-  const createPeerConnection = useCallback(
-    (playerId: string) => {
-      logger.info(`Creating peer connection for player: ${playerId}`);
-
-      // Initialize empty ICE candidate queue for this player
-      iceCandidateQueuesRef.current.set(playerId, []);
-
-      const peerConnection = new RTCPeerConnection(ICE_SERVERS);
-      const dataChannel = peerConnection.createDataChannel('game-data', {
-        ordered: true,
-      });
-
-      const peerInfo: PeerConnectionInfo = {
-        connection: peerConnection,
-        dataChannel,
-        playerId,
-        connectionState: 'connecting',
-      };
-
-      (dataChannel as any).addEventListener('open', () => {
-        logger.info(`Data channel opened for player: ${playerId}`);
-        peerInfo.connectionState = 'connected';
-        handleConnect(playerId);
-      });
-
-      (dataChannel as any).addEventListener('close', () => {
-        logger.info(`Data channel closed for player: ${playerId}`);
-        peerInfo.connectionState = 'disconnected';
-        handleDisconnect(playerId);
-      });
-
-      (dataChannel as any).addEventListener('message', (event: any) => {
-        try {
-          const data = JSON.parse(event.data);
-          onDataChannelMessage?.(playerId, data);
-        } catch (err) {
-          logger.error(`Failed to parse data channel message from ${playerId}:`, err);
-        }
-      });
-
-      (peerConnection as any).addEventListener('icecandidate', (event: any) => {
-        if (event.candidate) {
-          logger.info(`Sending ICE candidate to player: ${playerId}`);
-          sendSignalingMessage({
-            type: 'ice-candidate',
-            targetId: playerId,
-            payload: {
-              candidate: event.candidate.candidate,
-              sdpMLineIndex: event.candidate.sdpMLineIndex,
-              sdpMid: event.candidate.sdpMid,
-            },
-          });
-        }
-      });
-
-      (peerConnection as any).addEventListener('connectionstatechange', () => {
-        logger.info(
-          `Connection state changed for ${playerId}:`,
-          peerConnection.connectionState,
-          `Data channel state: ${dataChannel.readyState}`,
-        );
-
-        // Update internal state for monitoring
-        if (peerConnection.connectionState === 'connected') {
-          peerInfo.connectionState = 'connected';
-        }
-      });
-
-      peerConnectionsRef.current.set(playerId, peerInfo);
-      return peerInfo;
-    },
+  const signalingHandlers = useMemo(
+    () =>
+      createSignalingHandlers({
+        peerConnectionsRef,
+        iceCandidateQueuesRef,
+        sendSignalingMessage,
+        onPlayerConnected: handleConnect,
+        onPlayerDisconnected: handleDisconnect,
+        onDataChannelMessage,
+      }),
     [sendSignalingMessage, handleConnect, handleDisconnect, onDataChannelMessage],
-  );
-
-  const handlePlayerJoin = useCallback(
-    async (playerId: string) => {
-      logger.info(`Player joining: ${playerId}`);
-
-      if (peerConnectionsRef.current.has(playerId)) {
-        logger.info(`Player ${playerId} already has a connection`);
-        return;
-      }
-
-      const peerInfo = createPeerConnection(playerId);
-
-      try {
-        const offer = await peerInfo.connection.createOffer();
-        await peerInfo.connection.setLocalDescription(offer);
-
-        logger.info(`Sending offer to player: ${playerId}`);
-        sendSignalingMessage({
-          type: 'offer',
-          targetId: playerId,
-          payload: {
-            sdp: offer.sdp,
-            type: 'offer',
-          },
-        });
-      } catch (err) {
-        logger.error(`Failed to create offer for ${playerId}:`, err);
-        peerConnectionsRef.current.delete(playerId);
-      }
-    },
-    [createPeerConnection, sendSignalingMessage],
-  );
-
-  const handleAnswer = useCallback(async (playerId: string, answer: any) => {
-    logger.info(`Received answer from player: ${playerId}`);
-
-    const peerInfo = peerConnectionsRef.current.get(playerId);
-    if (!peerInfo) {
-      logger.error(`No peer connection found for player: ${playerId}`);
-      return;
-    }
-
-    try {
-      await peerInfo.connection.setRemoteDescription(new RTCSessionDescription(answer));
-      logger.info(`Remote description set for player: ${playerId}`);
-
-      // Drain queued ICE candidates now that remote description is set
-      const queue = iceCandidateQueuesRef.current.get(playerId);
-      if (queue && queue.length > 0) {
-        logger.info(`Adding ${queue.length} queued ICE candidates for ${playerId}`);
-        for (const candidate of queue) {
-          try {
-            await peerInfo.connection.addIceCandidate(
-              new RTCIceCandidate({
-                candidate: candidate.candidate,
-                sdpMLineIndex: candidate.sdpMLineIndex,
-                sdpMid: candidate.sdpMid,
-              }),
-            );
-          } catch (err) {
-            logger.error(`Failed to add queued ICE candidate for ${playerId}:`, err);
-          }
-        }
-        iceCandidateQueuesRef.current.set(playerId, []);
-        logger.info(`Queued ICE candidates processed for ${playerId}`);
-      }
-    } catch (err) {
-      logger.error(`Failed to set remote description for ${playerId}:`, err);
-    }
-  }, []);
-
-  const handleIceCandidate = useCallback(async (playerId: string, candidate: any) => {
-    logger.info(`Received ICE candidate from player: ${playerId}`);
-
-    const peerInfo = peerConnectionsRef.current.get(playerId);
-    if (!peerInfo) {
-      logger.error(`No peer connection found for player: ${playerId}`);
-      return;
-    }
-
-    // Queue ICE candidate if remote description is not yet set
-    if (!peerInfo.connection.remoteDescription) {
-      logger.info(
-        `Queueing ICE candidate for ${playerId} until remote description is set`,
-      );
-      const queue = iceCandidateQueuesRef.current.get(playerId) || [];
-      queue.push(candidate);
-      iceCandidateQueuesRef.current.set(playerId, queue);
-      return;
-    }
-
-    try {
-      await peerInfo.connection.addIceCandidate(
-        new RTCIceCandidate({
-          candidate: candidate.candidate,
-          sdpMLineIndex: candidate.sdpMLineIndex,
-          sdpMid: candidate.sdpMid,
-        }),
-      );
-      logger.info(`ICE candidate added for player: ${playerId}`);
-    } catch (err) {
-      logger.error(`Failed to add ICE candidate for ${playerId}:`, err);
-    }
-  }, []);
-
-  const handleSignalingMessage = useCallback(
-    (message: SignalingMessage) => {
-      const senderId = message.senderId;
-      if (!senderId) {
-        logger.error('Received message without senderId');
-        return;
-      }
-
-      switch (message.type) {
-        case 'join':
-          handlePlayerJoin(senderId);
-          break;
-        case 'answer':
-          handleAnswer(senderId, message.payload);
-          break;
-        case 'ice-candidate':
-          handleIceCandidate(senderId, message.payload);
-          break;
-        default:
-          logger.warn('Unknown message type:', message.type);
-      }
-    },
-    [handlePlayerJoin, handleAnswer, handleIceCandidate],
   );
 
   const broadcastToPlayers = useCallback((data: any) => {
@@ -302,12 +94,13 @@ export function useWebRTCHost({
       peerInfo.connection.close();
     });
     peerConnectionsRef.current.clear();
+    iceCandidateQueuesRef.current.clear();
     setConnectedPlayers([]);
   }, []);
 
   return {
     connectedPlayers,
-    handleSignalingMessage,
+    handleSignalingMessage: signalingHandlers.handleSignalingMessage,
     broadcastToPlayers,
     sendToPlayer,
     disconnectPlayer,
