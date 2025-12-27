@@ -84,11 +84,7 @@ export default function HostScreen() {
   useEffect(() => {
     const code = generateGameCode();
     connect(HOST_PLAYER_ID, code);
-
-    return () => {
-      disconnect();
-      cleanupWebRTC();
-    };
+    // Don't cleanup on unmount - connections persist across navigation
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

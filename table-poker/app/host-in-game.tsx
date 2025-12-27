@@ -23,12 +23,14 @@ export default function HostInGameScreen() {
     [pokerGame, setPokerGame],
   );
 
+  // Reuse existing signaling connection (already established in host screen)
   const { sendMessage } = useSignalingConnection({
     onMessage: (message) => {
       handleSignalingMessage(message);
     },
   });
 
+  // Reuse existing WebRTC connections (already established in host screen)
   const {
     connectedPlayers,
     handleSignalingMessage,
@@ -38,10 +40,10 @@ export default function HostInGameScreen() {
   } = useWebRTCHost({
     sendSignalingMessage: sendMessage,
     onPlayerConnected: (playerId) => {
-      logger.info(`Player connected: ${playerId}`);
+      logger.info(`Player connected in-game: ${playerId}`);
     },
     onPlayerDisconnected: (playerId) => {
-      logger.info(`Player disconnected: ${playerId}`);
+      logger.info(`Player disconnected in-game: ${playerId}`);
     },
     onDataChannelMessage: (playerId, data) => {
       handlePlayerAction(playerId, data);

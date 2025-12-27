@@ -1,9 +1,10 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useAtom } from 'jotai';
 import { SIGNALING_SERVER_URL } from '@/constants/signaling';
 import type { SignalingMessage } from '@/types/signaling';
 import { logger } from '@/utils/logger';
-
-export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
+import { signalingConnectionAtom } from '@/store/signaling-connection';
+import type { ConnectionState } from '@/store/signaling-connection';
 
 interface UseSignalingConnectionProps {
   playerId?: string;
@@ -11,14 +12,18 @@ interface UseSignalingConnectionProps {
   onMessage?: (message: SignalingMessage) => void;
 }
 
+// Module-level refs to persist across component unmounts
+let wsRef: WebSocket | null = null;
+let messageHandlerRef: ((message: SignalingMessage) => void) | null = null;
+
 export function useSignalingConnection({
   playerId,
   gameId,
   onMessage,
 }: UseSignalingConnectionProps = {}) {
-  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
-  const [error, setError] = useState<string | null>(null);
-  const wsRef = useRef<WebSocket | null>(null);
+  const [{ connectionState, error }, setSignalingState] = useAtom(
+    signalingConnectionAtom,
+  );
 
   const connect = useCallback(
     (playerIdOverride?: string, gameIdOverride?: string) => {
@@ -26,33 +31,40 @@ export function useSignalingConnection({
       const finalGameId = gameIdOverride || gameId;
 
       if (!finalPlayerId || !finalGameId) {
-        setError('Player ID and Game ID are required');
-        setConnectionState('error');
+        setSignalingState({
+          connectionState: 'error',
+          error: 'Player ID and Game ID are required',
+        });
         return;
       }
 
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
+      if (wsRef?.readyState === WebSocket.OPEN) {
         logger.info('Already connected');
         return;
       }
 
       try {
-        setConnectionState('connecting');
-        setError(null);
+        setSignalingState({
+          connectionState: 'connecting',
+          error: null,
+        });
 
         const url = `${SIGNALING_SERVER_URL}?playerId=${encodeURIComponent(finalPlayerId)}&gameId=${encodeURIComponent(finalGameId)}`;
         const ws = new WebSocket(url);
 
         ws.onopen = () => {
           logger.info('WebSocket connected');
-          setConnectionState('connected');
+          setSignalingState({
+            connectionState: 'connected',
+            error: null,
+          });
         };
 
         ws.onmessage = (event) => {
           try {
             const message: SignalingMessage = JSON.parse(event.data);
             logger.info('Received message:', message);
-            onMessage?.(message);
+            messageHandlerRef?.(message);
           } catch (err) {
             logger.error('Failed to parse message:', err);
           }
@@ -60,47 +72,56 @@ export function useSignalingConnection({
 
         ws.onerror = (event) => {
           logger.error('WebSocket error:', event);
-          setError('Connection error occurred');
-          setConnectionState('error');
+          setSignalingState({
+            connectionState: 'error',
+            error: 'Connection error occurred',
+          });
         };
 
         ws.onclose = () => {
           logger.info('WebSocket disconnected');
-          setConnectionState('disconnected');
-          wsRef.current = null;
+          setSignalingState({
+            connectionState: 'disconnected',
+            error: null,
+          });
+          wsRef = null;
         };
 
-        wsRef.current = ws;
+        wsRef = ws;
       } catch (err) {
         logger.error('Failed to connect:', err);
-        setError(err instanceof Error ? err.message : 'Failed to connect');
-        setConnectionState('error');
+        setSignalingState({
+          connectionState: 'error',
+          error: err instanceof Error ? err.message : 'Failed to connect',
+        });
       }
     },
-    [playerId, gameId, onMessage],
+    [playerId, gameId, setSignalingState],
   );
 
   const disconnect = useCallback(() => {
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-      setConnectionState('disconnected');
+    if (wsRef) {
+      wsRef.close();
+      wsRef = null;
+      setSignalingState({
+        connectionState: 'disconnected',
+        error: null,
+      });
     }
-  }, []);
+  }, [setSignalingState]);
 
   const sendMessage = useCallback((message: Omit<SignalingMessage, 'senderId'>) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(message));
+    if (wsRef?.readyState === WebSocket.OPEN) {
+      wsRef.send(JSON.stringify(message));
     } else {
       logger.error('WebSocket is not connected');
     }
   }, []);
 
+  // Update the message handler ref whenever onMessage changes
   useEffect(() => {
-    return () => {
-      disconnect();
-    };
-  }, [disconnect]);
+    messageHandlerRef = onMessage || null;
+  }, [onMessage]);
 
   return {
     connectionState,

@@ -1,8 +1,10 @@
-import { useCallback, useRef, useState, useMemo } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
+import { useAtom } from 'jotai';
 import type { SignalingMessage } from '@/types/signaling';
 import { logger } from '@/utils/logger';
 import type { PeerConnectionInfo } from './webrtc-host/peer-connection-manager';
 import { createSignalingHandlers } from './webrtc-host/signaling-handlers';
+import { webrtcHostAtom } from '@/store/webrtc-host';
 
 interface UseWebRTCHostProps {
   sendSignalingMessage: (message: Omit<SignalingMessage, 'senderId'>) => void;
@@ -11,50 +13,72 @@ interface UseWebRTCHostProps {
   onDataChannelMessage?: (playerId: string, data: any) => void;
 }
 
+// Module-level refs to persist across component unmounts
+let peerConnectionsRef: Map<string, PeerConnectionInfo> = new Map();
+let iceCandidateQueuesRef: Map<string, any[]> = new Map();
+let callbacksRef: {
+  onPlayerConnected?: (playerId: string) => void;
+  onPlayerDisconnected?: (playerId: string) => void;
+  onDataChannelMessage?: (playerId: string, data: any) => void;
+} = {};
+
 export function useWebRTCHost({
   sendSignalingMessage,
   onPlayerConnected,
   onPlayerDisconnected,
   onDataChannelMessage,
 }: UseWebRTCHostProps) {
-  const peerConnectionsRef = useRef<Map<string, PeerConnectionInfo>>(new Map());
-  const iceCandidateQueuesRef = useRef<Map<string, any[]>>(new Map());
-  const [connectedPlayers, setConnectedPlayers] = useState<string[]>([]);
+  const [{ connectedPlayers }, setWebRTCState] = useAtom(webrtcHostAtom);
+
+  // Update callbacks ref whenever they change
+  useEffect(() => {
+    callbacksRef = {
+      onPlayerConnected,
+      onPlayerDisconnected,
+      onDataChannelMessage,
+    };
+  }, [onPlayerConnected, onPlayerDisconnected, onDataChannelMessage]);
 
   const handleConnect = useCallback(
     (playerId: string) => {
-      setConnectedPlayers((prev) => [...prev, playerId]);
-      onPlayerConnected?.(playerId);
+      setWebRTCState((prev) => ({
+        connectedPlayers: [...prev.connectedPlayers, playerId],
+      }));
+      callbacksRef.onPlayerConnected?.(playerId);
     },
-    [onPlayerConnected],
+    [setWebRTCState],
   );
 
   const handleDisconnect = useCallback(
     (playerId: string) => {
-      peerConnectionsRef.current.delete(playerId);
-      iceCandidateQueuesRef.current.delete(playerId);
-      setConnectedPlayers((prev) => prev.filter((id) => id !== playerId));
-      onPlayerDisconnected?.(playerId);
+      peerConnectionsRef.delete(playerId);
+      iceCandidateQueuesRef.delete(playerId);
+      setWebRTCState((prev) => ({
+        connectedPlayers: prev.connectedPlayers.filter((id) => id !== playerId),
+      }));
+      callbacksRef.onPlayerDisconnected?.(playerId);
     },
-    [onPlayerDisconnected],
+    [setWebRTCState],
   );
 
   const signalingHandlers = useMemo(
     () =>
       createSignalingHandlers({
-        peerConnectionsRef,
-        iceCandidateQueuesRef,
+        peerConnectionsRef: { current: peerConnectionsRef },
+        iceCandidateQueuesRef: { current: iceCandidateQueuesRef },
         sendSignalingMessage,
         onPlayerConnected: handleConnect,
         onPlayerDisconnected: handleDisconnect,
-        onDataChannelMessage,
+        onDataChannelMessage: (playerId: string, data: any) => {
+          callbacksRef.onDataChannelMessage?.(playerId, data);
+        },
       }),
-    [sendSignalingMessage, handleConnect, handleDisconnect, onDataChannelMessage],
+    [sendSignalingMessage, handleConnect, handleDisconnect],
   );
 
   const broadcastToPlayers = useCallback((data: any) => {
     const message = JSON.stringify(data);
-    peerConnectionsRef.current.forEach((peerInfo, playerId) => {
+    peerConnectionsRef.forEach((peerInfo, playerId) => {
       if (peerInfo.dataChannel?.readyState === 'open') {
         try {
           peerInfo.dataChannel.send(message);
@@ -66,7 +90,7 @@ export function useWebRTCHost({
   }, []);
 
   const sendToPlayer = useCallback((playerId: string, data: any) => {
-    const peerInfo = peerConnectionsRef.current.get(playerId);
+    const peerInfo = peerConnectionsRef.get(playerId);
     if (peerInfo?.dataChannel?.readyState === 'open') {
       try {
         peerInfo.dataChannel.send(JSON.stringify(data));
@@ -80,7 +104,7 @@ export function useWebRTCHost({
 
   const disconnectPlayer = useCallback(
     (playerId: string) => {
-      const peerInfo = peerConnectionsRef.current.get(playerId);
+      const peerInfo = peerConnectionsRef.get(playerId);
       if (peerInfo) {
         peerInfo.connection.close();
         handleDisconnect(playerId);
@@ -90,13 +114,13 @@ export function useWebRTCHost({
   );
 
   const cleanup = useCallback(() => {
-    peerConnectionsRef.current.forEach((peerInfo) => {
+    peerConnectionsRef.forEach((peerInfo) => {
       peerInfo.connection.close();
     });
-    peerConnectionsRef.current.clear();
-    iceCandidateQueuesRef.current.clear();
-    setConnectedPlayers([]);
-  }, []);
+    peerConnectionsRef.clear();
+    iceCandidateQueuesRef.clear();
+    setWebRTCState({ connectedPlayers: [] });
+  }, [setWebRTCState]);
 
   return {
     connectedPlayers,
