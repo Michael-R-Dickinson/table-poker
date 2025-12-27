@@ -5,10 +5,17 @@ import { useSignalingConnection } from '@/hooks/use-signaling-connection';
 import { useWebRTCHost } from '@/hooks/use-webrtc-host';
 import { useLocalSearchParams, router } from 'expo-router';
 import { logger } from '@/utils/logger';
+import { useAtom } from 'jotai';
+import { pokerGameAtom } from '@/store/poker-game';
+import { Table } from 'poker-ts';
+import { useEffect } from 'react';
+import { extractPlayerGameState } from '@/utils/game-state';
 
 export default function HostInGameScreen() {
   const params = useLocalSearchParams();
   const { gameCode, smallBlind, bigBlind, buyIn } = params;
+
+  const [pokerGame, setPokerGame] = useAtom(pokerGameAtom);
 
   const { sendMessage } = useSignalingConnection({
     onMessage: (message) => {
@@ -34,12 +41,42 @@ export default function HostInGameScreen() {
     },
   });
 
+  useEffect(() => {
+    // Initialize poker table when component mounts
+    const table = new Table({
+      smallBlind: Number(smallBlind),
+      bigBlind: Number(bigBlind),
+    });
+
+    setPokerGame({
+      table,
+      version: 0,
+    });
+
+    logger.info('Poker table initialized', {
+      smallBlind,
+      bigBlind,
+      buyIn,
+    });
+  }, [smallBlind, bigBlind, buyIn]);
+
   const handleEndGame = () => {
     broadcastToPlayers({
       type: 'game_end',
     });
     cleanupWebRTC();
     router.back();
+  };
+
+  const handleLogGameState = () => {
+    if (!pokerGame.table) {
+      logger.warn('No poker table initialized');
+      return;
+    }
+
+    // Log game state for player at seat 0 (as an example)
+    const gameState = extractPlayerGameState(pokerGame.table, 0);
+    logger.info('Current game state for seat 0:', gameState);
   };
 
   return (
@@ -86,7 +123,14 @@ export default function HostInGameScreen() {
       </ThemedView>
 
       <ThemedView style={styles.actionsContainer}>
-        <Button title="End Game" onPress={handleEndGame} color="#F44336" />
+        <View style={styles.buttonRow}>
+          <View style={styles.button}>
+            <Button title="Log Game State" onPress={handleLogGameState} color="#2196F3" />
+          </View>
+          <View style={styles.button}>
+            <Button title="End Game" onPress={handleEndGame} color="#F44336" />
+          </View>
+        </View>
       </ThemedView>
     </ThemedView>
   );
@@ -145,5 +189,12 @@ const styles = StyleSheet.create({
   },
   actionsContainer: {
     marginTop: 20,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  button: {
+    flex: 1,
   },
 });
