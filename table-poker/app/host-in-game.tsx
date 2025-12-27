@@ -1,4 +1,4 @@
-import { StyleSheet, View, Button, FlatList, ScrollView } from 'react-native';
+import { StyleSheet, View, Button, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSignalingConnection } from '@/hooks/use-signaling-connection';
@@ -9,14 +9,19 @@ import { useAtom } from 'jotai';
 import { pokerGameAtom } from '@/store/poker-game';
 import { Table } from 'poker-ts';
 import { useEffect, useMemo } from 'react';
-import { extractPlayerGameState } from '@/utils/game-state';
 import { createGameControl } from '@/utils/game-control';
+import { useHostGameplay } from '@/hooks/use-host-gameplay';
 
 export default function HostInGameScreen() {
   const params = useLocalSearchParams();
   const { gameCode, smallBlind, bigBlind, buyIn } = params;
 
   const [pokerGame, setPokerGame] = useAtom(pokerGameAtom);
+
+  const gameControl = useMemo(
+    () => createGameControl(pokerGame, setPokerGame),
+    [pokerGame, setPokerGame],
+  );
 
   const { sendMessage } = useSignalingConnection({
     onMessage: (message) => {
@@ -28,6 +33,7 @@ export default function HostInGameScreen() {
     connectedPlayers,
     handleSignalingMessage,
     broadcastToPlayers,
+    sendToPlayer,
     cleanup: cleanupWebRTC,
   } = useWebRTCHost({
     sendSignalingMessage: sendMessage,
@@ -38,8 +44,17 @@ export default function HostInGameScreen() {
       logger.info(`Player disconnected: ${playerId}`);
     },
     onDataChannelMessage: (playerId, data) => {
-      logger.info(`Received from ${playerId}:`, data);
+      handlePlayerAction(playerId, data);
     },
+  });
+
+  const { startGame, handlePlayerAction, gameStarted } = useHostGameplay({
+    pokerGame,
+    gameControl,
+    connectedPlayers,
+    sendToPlayer,
+    broadcastToPlayers,
+    buyIn: Number(buyIn),
   });
 
   useEffect(() => {
@@ -69,11 +84,6 @@ export default function HostInGameScreen() {
     router.back();
   };
 
-  const gameControl = useMemo(
-    () => createGameControl(pokerGame, setPokerGame),
-    [pokerGame, setPokerGame],
-  );
-
   const handleLogGameState = () => {
     if (!pokerGame.table) {
       logger.warn('No poker table initialized');
@@ -89,110 +99,33 @@ export default function HostInGameScreen() {
       isHandInProgress: table.isHandInProgress(),
       isBettingRoundInProgress: bettingRoundInProgress,
       seats: table.seats(),
+      communityCards: table.communityCards(),
       version: pokerGame.version,
     });
-
-    if (table.isHandInProgress()) {
-      const gameState = extractPlayerGameState(table, 0);
-      logger.info('Current game state for seat 0:', gameState);
-    }
   };
 
-  const handleSeatPlayers = () => {
-    try {
-      gameControl.seatPlayer(0, Number(buyIn));
-      gameControl.seatPlayer(1, Number(buyIn));
-      gameControl.seatPlayer(2, Number(buyIn));
-      logger.info('Seated 3 players at seats 0, 1, 2');
-    } catch (error) {
-      logger.error('Failed to seat players:', error);
-    }
-  };
-
-  const handleStartHand = () => {
-    try {
-      gameControl.startHand();
-      logger.info('Hand started');
-    } catch (error) {
-      logger.error('Failed to start hand:', error);
-    }
-  };
-
-  const handleFold = () => {
-    try {
-      gameControl.takeAction('fold');
-      logger.info('Action taken: fold');
-    } catch (error) {
-      logger.error('Failed to fold:', error);
-    }
-  };
-
-  const handleCheck = () => {
-    try {
-      gameControl.takeAction('check');
-      logger.info('Action taken: check');
-    } catch (error) {
-      logger.error('Failed to check:', error);
-    }
-  };
-
-  const handleCall = () => {
-    try {
-      gameControl.takeAction('call');
-      logger.info('Action taken: call');
-    } catch (error) {
-      logger.error('Failed to call:', error);
-    }
-  };
-
-  const handleBet = () => {
-    try {
-      const betSize = Number(bigBlind);
-      gameControl.takeAction('bet', betSize);
-      logger.info('Action taken: bet', betSize);
-    } catch (error) {
-      logger.error('Failed to bet:', error);
-    }
-  };
-
-  const handleRaise = () => {
-    try {
-      const raiseSize = Number(bigBlind) * 2;
-      gameControl.takeAction('raise', raiseSize);
-      logger.info('Action taken: raise', raiseSize);
-    } catch (error) {
-      logger.error('Failed to raise:', error);
-    }
-  };
-
-  const handleEndBettingRound = () => {
-    try {
-      gameControl.endBettingRound();
-      logger.info('Betting round ended');
-    } catch (error) {
-      logger.error('Failed to end betting round:', error);
-    }
-  };
-
-  const handleShowdown = () => {
-    try {
-      gameControl.performShowdown();
-      logger.info('Showdown performed');
-    } catch (error) {
-      logger.error('Failed to perform showdown:', error);
-    }
-  };
-
-  const legalActions = useMemo(() => {
-    if (
-      !pokerGame.table ||
-      !pokerGame.table.isHandInProgress() ||
-      !pokerGame.table.isBettingRoundInProgress()
-    ) {
+  const communityCards = useMemo(() => {
+    if (!pokerGame.table || !pokerGame.table.isHandInProgress()) {
       return [];
     }
-    return pokerGame.table.legalActions().actions;
+    return pokerGame.table.communityCards();
   }, [pokerGame]);
+
+  const formatCard = (card: any) => {
+    if (!card) return '';
+    const rankMap: { [key: string]: string } = {
+      '10': 'T',
+    };
+    const rank = rankMap[card.rank] || card.rank;
+    const suitMap: { [key: string]: string } = {
+      clubs: 'c',
+      diamonds: 'd',
+      hearts: 'h',
+      spades: 's',
+    };
+    const suit = suitMap[card.suit] || card.suit[0];
+    return `${rank}${suit}`;
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -219,66 +152,39 @@ export default function HostInGameScreen() {
         </ThemedView>
       </ThemedView>
 
-      <ThemedView style={styles.section}>
-        <ThemedText type="subtitle">Game Setup</ThemedText>
-        <View style={styles.buttonRow}>
-          <View style={styles.button}>
-            <Button title="Seat Players" onPress={handleSeatPlayers} color="#9C27B0" />
-          </View>
-          <View style={styles.button}>
-            <Button title="Start Hand" onPress={handleStartHand} color="#4CAF50" />
-          </View>
-        </View>
-      </ThemedView>
+      {!gameStarted && (
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle">Game Setup</ThemedText>
+          <Button
+            title="Start Game"
+            onPress={startGame}
+            color="#4CAF50"
+            disabled={connectedPlayers.length < 2}
+          />
+          {connectedPlayers.length < 2 && (
+            <ThemedText style={styles.warningText}>
+              Need at least 2 players to start
+            </ThemedText>
+          )}
+        </ThemedView>
+      )}
 
-      <ThemedView style={styles.section}>
-        <ThemedText type="subtitle">Player Actions</ThemedText>
-        <View style={styles.buttonRow}>
-          {legalActions.includes('fold') && (
-            <View style={styles.button}>
-              <Button title="Fold" onPress={handleFold} color="#F44336" />
-            </View>
-          )}
-          {legalActions.includes('check') && (
-            <View style={styles.button}>
-              <Button title="Check" onPress={handleCheck} color="#2196F3" />
-            </View>
-          )}
-          {legalActions.includes('call') && (
-            <View style={styles.button}>
-              <Button title="Call" onPress={handleCall} color="#FF9800" />
-            </View>
-          )}
-        </View>
-        <View style={styles.buttonRow}>
-          {legalActions.includes('bet') && (
-            <View style={styles.button}>
-              <Button title="Bet" onPress={handleBet} color="#673AB7" />
-            </View>
-          )}
-          {legalActions.includes('raise') && (
-            <View style={styles.button}>
-              <Button title="Raise" onPress={handleRaise} color="#E91E63" />
-            </View>
-          )}
-        </View>
-      </ThemedView>
-
-      <ThemedView style={styles.section}>
-        <ThemedText type="subtitle">Round Controls</ThemedText>
-        <View style={styles.buttonRow}>
-          <View style={styles.button}>
-            <Button
-              title="End Betting Round"
-              onPress={handleEndBettingRound}
-              color="#FF5722"
-            />
+      {gameStarted && (
+        <ThemedView style={styles.section}>
+          <ThemedText type="subtitle">Community Cards</ThemedText>
+          <View style={styles.communityCardsContainer}>
+            {communityCards.length === 0 ? (
+              <ThemedText style={styles.emptyText}>No community cards yet</ThemedText>
+            ) : (
+              communityCards.map((card, index) => (
+                <View key={index} style={styles.card}>
+                  <ThemedText style={styles.cardText}>{formatCard(card)}</ThemedText>
+                </View>
+              ))
+            )}
           </View>
-          <View style={styles.button}>
-            <Button title="Showdown" onPress={handleShowdown} color="#795548" />
-          </View>
-        </View>
-      </ThemedView>
+        </ThemedView>
+      )}
 
       <ThemedView style={styles.section}>
         <ThemedText type="subtitle">Players ({connectedPlayers.length})</ThemedText>
@@ -367,5 +273,32 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
+  },
+  communityCardsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    marginTop: 10,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 15,
+    minWidth: 60,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  cardText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  warningText: {
+    color: '#ff9800',
+    textAlign: 'center',
+    marginTop: 10,
+    fontStyle: 'italic',
   },
 });

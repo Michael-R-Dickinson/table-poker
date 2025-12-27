@@ -221,6 +221,7 @@ export function useWebRTCPlayer({
     if (dataChannelRef.current?.readyState === 'open') {
       try {
         dataChannelRef.current.send(JSON.stringify(data));
+        console.log('Sent to host:', data);
       } catch (err) {
         logger.error('Failed to send to host:', err);
       }
