@@ -7,6 +7,7 @@ import { useWebRTCPlayer } from '@/hooks/use-webrtc-player';
 import { router } from 'expo-router';
 import { logger } from '@/utils/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
+import { ROUTES } from '@/constants/routes';
 
 export default function JoinScreen() {
   const [gameCode, setGameCode] = useState('');
@@ -43,6 +44,15 @@ export default function JoinScreen() {
     },
     onDataChannelMessage: (data) => {
       logger.info('Received from host:', data);
+      if (data.type === 'game_start') {
+        router.push({
+          pathname: ROUTES.PLAYER_IN_GAME as any,
+          params: {
+            gameCode,
+            playerName,
+          },
+        });
+      }
     },
   });
 
@@ -102,6 +112,7 @@ export default function JoinScreen() {
         disconnectWebRTC();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isJoining]);
 
   const getSignalingStatusColor = () => {

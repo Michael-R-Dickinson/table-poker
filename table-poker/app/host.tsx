@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, Button, FlatList } from 'react-native';
+import { StyleSheet, View, Button, FlatList, TextInput } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSignalingConnection } from '@/hooks/use-signaling-connection';
@@ -7,9 +7,13 @@ import { useWebRTCHost } from '@/hooks/use-webrtc-host';
 import { router } from 'expo-router';
 import { logger } from '@/utils/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
+import { ROUTES } from '@/constants/routes';
 
 export default function HostScreen() {
   const [gameCode, setGameCode] = useState('');
+  const [smallBlind, setSmallBlind] = useState('5');
+  const [bigBlind, setBigBlind] = useState('10');
+  const [buyIn, setBuyIn] = useState('1000');
 
   const { connectionState, error, connect, disconnect, sendMessage } =
     useSignalingConnection({
@@ -49,11 +53,26 @@ export default function HostScreen() {
     router.back();
   };
 
-  const handleTestBroadcast = () => {
+  const handleStartGame = () => {
+    const gameConfig = {
+      smallBlind: parseInt(smallBlind, 10),
+      bigBlind: parseInt(bigBlind, 10),
+      buyIn: parseInt(buyIn, 10),
+    };
+
     broadcastToPlayers({
-      type: 'test',
-      message: 'Hello from host!',
-      timestamp: Date.now(),
+      type: 'game_start',
+      config: gameConfig,
+    });
+
+    router.push({
+      pathname: ROUTES.HOST_IN_GAME as any,
+      params: {
+        gameCode,
+        smallBlind,
+        bigBlind,
+        buyIn,
+      },
     });
   };
 
@@ -65,6 +84,7 @@ export default function HostScreen() {
       disconnect();
       cleanupWebRTC();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const getConnectionStatusColor = () => {
@@ -119,6 +139,40 @@ export default function HostScreen() {
           </ThemedText>
         </ThemedView>
 
+        <ThemedView style={styles.configContainer}>
+          <ThemedText type="subtitle">Game Configuration</ThemedText>
+
+          <ThemedView style={styles.configRow}>
+            <ThemedText style={styles.configLabel}>Small Blind:</ThemedText>
+            <TextInput
+              style={styles.configInput}
+              value={smallBlind}
+              onChangeText={setSmallBlind}
+              keyboardType="numeric"
+            />
+          </ThemedView>
+
+          <ThemedView style={styles.configRow}>
+            <ThemedText style={styles.configLabel}>Big Blind:</ThemedText>
+            <TextInput
+              style={styles.configInput}
+              value={bigBlind}
+              onChangeText={setBigBlind}
+              keyboardType="numeric"
+            />
+          </ThemedView>
+
+          <ThemedView style={styles.configRow}>
+            <ThemedText style={styles.configLabel}>Buy-In:</ThemedText>
+            <TextInput
+              style={styles.configInput}
+              value={buyIn}
+              onChangeText={setBuyIn}
+              keyboardType="numeric"
+            />
+          </ThemedView>
+        </ThemedView>
+
         <ThemedView style={styles.playersContainer}>
           <ThemedText type="subtitle">
             Connected Players ({connectedPlayers.length})
@@ -143,10 +197,10 @@ export default function HostScreen() {
 
         <ThemedView style={styles.actionsContainer}>
           <Button
-            title="Test Broadcast"
-            onPress={handleTestBroadcast}
+            title="Start Game"
+            onPress={handleStartGame}
             disabled={connectedPlayers.length === 0}
-            color="#2196F3"
+            color="#4CAF50"
           />
           <View style={styles.buttonSpacer} />
           <Button title="Stop Hosting" onPress={handleStopHosting} color="#F44336" />
@@ -203,6 +257,32 @@ const styles = StyleSheet.create({
   instructionText: {
     fontSize: 14,
     color: '#666',
+  },
+  configContainer: {
+    padding: 15,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 10,
+    gap: 12,
+  },
+  configRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  configLabel: {
+    fontSize: 16,
+    flex: 1,
+  },
+  configInput: {
+    height: 40,
+    width: 100,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    color: '#000',
   },
   playersContainer: {
     flex: 1,
