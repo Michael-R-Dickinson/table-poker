@@ -28,7 +28,6 @@ export default function JoinScreen() {
         const errorPayload = message.payload as { code: string; message: string };
         logger.error('Signaling error:', errorPayload);
         setJoinError(errorPayload.message);
-        setIsJoining(false);
       } else {
         handleSignalingMessage(message);
       }
@@ -104,6 +103,7 @@ export default function JoinScreen() {
     disconnectWebRTC();
     setIsJoining(false);
     setIsJoined(false);
+    setJoinError(null);
   };
 
   const handleTestSend = () => {

@@ -103,6 +103,8 @@ def handle_message(event, connection_id):
     Handle signaling messages (offer, answer, ICE candidates, join).
     Route messages to the intended recipient.
     """
+    global apigateway_management
+
     try:
         body = json.loads(event.get('body', '{}'))
         message_type = body.get('type')
@@ -146,7 +148,6 @@ def handle_message(event, connection_id):
                 domain = event.get('requestContext', {}).get('domainName')
                 stage = event.get('requestContext', {}).get('stage')
 
-                global apigateway_management
                 if apigateway_management is None:
                     apigateway_management = boto3.client(
                         'apigatewaymanagementapi',
@@ -181,7 +182,6 @@ def handle_message(event, connection_id):
                 domain = event.get('requestContext', {}).get('domainName')
                 stage = event.get('requestContext', {}).get('stage')
 
-                global apigateway_management
                 if apigateway_management is None:
                     apigateway_management = boto3.client(
                         'apigatewaymanagementapi',
@@ -234,7 +234,6 @@ def handle_message(event, connection_id):
         domain = event.get('requestContext', {}).get('domainName')
         stage = event.get('requestContext', {}).get('stage')
 
-        global apigateway_management
         if apigateway_management is None:
             apigateway_management = boto3.client(
                 'apigatewaymanagementapi',
