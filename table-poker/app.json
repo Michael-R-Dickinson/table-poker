@@ -55,7 +55,17 @@
           }
         }
       ],
-      "@config-plugins/react-native-webrtc"
+      "@config-plugins/react-native-webrtc",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "packagingOptions": {
+              "pickFirst": ["**/libcrypto.so"]
+            }
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
