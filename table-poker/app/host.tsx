@@ -42,7 +42,12 @@ export default function HostScreen() {
 
   console.log('connected players state updated: ', connectedPlayers);
   const generateGameCode = () => {
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    // Production: random code generation
+    // const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // Testing: fixed code for easier development
+    const code = 'AAAAAA';
+
     setGameCode(code);
     return code;
   };

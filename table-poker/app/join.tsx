@@ -10,8 +10,8 @@ import { HOST_PLAYER_ID } from '@/constants/signaling';
 import { ROUTES } from '@/constants/routes';
 
 export default function JoinScreen() {
-  const [gameCode, setGameCode] = useState('');
-  const [playerName, setPlayerName] = useState('');
+  const [gameCode, setGameCode] = useState('AAAAAA');
+  const [playerName, setPlayerName] = useState('player');
   const [isJoining, setIsJoining] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
