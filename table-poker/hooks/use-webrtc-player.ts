@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useAtom } from 'jotai';
 import {
   RTCPeerConnection,
   RTCSessionDescription,
@@ -7,6 +8,8 @@ import {
 import type { SignalingMessage } from '@/types/signaling';
 import { logger } from '@/utils/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
+import { webrtcPlayerAtom } from '@/store/webrtc-player';
+import type { PlayerConnectionState } from '@/store/webrtc-player';
 
 const ICE_SERVERS = {
   iceServers: [
@@ -15,8 +18,6 @@ const ICE_SERVERS = {
   ],
 };
 
-type ConnectionState = 'disconnected' | 'connecting' | 'connected';
-
 interface UseWebRTCPlayerProps {
   sendSignalingMessage: (message: Omit<SignalingMessage, 'senderId'>) => void;
   onConnected?: () => void;
@@ -24,46 +25,69 @@ interface UseWebRTCPlayerProps {
   onDataChannelMessage?: (data: any) => void;
 }
 
+// Module-level refs to persist across component unmounts
+let peerConnectionRef: RTCPeerConnection | null = null;
+let dataChannelRef: any = null;
+let iceCandidateQueueRef: any[] = [];
+let callbacksRef: {
+  onConnected?: () => void;
+  onDisconnected?: () => void;
+  onDataChannelMessage?: (data: any) => void;
+} = {};
+
 export function useWebRTCPlayer({
   sendSignalingMessage,
   onConnected,
   onDisconnected,
   onDataChannelMessage,
 }: UseWebRTCPlayerProps) {
-  const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
-  const dataChannelRef = useRef<any>(null);
-  const iceCandidateQueueRef = useRef<any[]>([]);
-  const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
+  const [{ connectionState }, setWebRTCState] = useAtom(webrtcPlayerAtom);
+
+  // Update callbacks ref whenever they change
+  useEffect(() => {
+    callbacksRef = {
+      onConnected,
+      onDisconnected,
+      onDataChannelMessage,
+    };
+  }, [onConnected, onDisconnected, onDataChannelMessage]);
+
+  const updateConnectionState = useCallback(
+    (state: PlayerConnectionState) => {
+      setWebRTCState({ connectionState: state });
+    },
+    [setWebRTCState],
+  );
 
   const createPeerConnection = useCallback(() => {
     logger.info('Creating peer connection to host');
 
     // Clear any queued ICE candidates from previous connection attempts
-    iceCandidateQueueRef.current = [];
+    iceCandidateQueueRef = [];
 
     const peerConnection = new RTCPeerConnection(ICE_SERVERS);
 
     (peerConnection as any).addEventListener('datachannel', (event: any) => {
       logger.info('Data channel received from host');
       const dataChannel = event.channel;
-      dataChannelRef.current = dataChannel;
+      dataChannelRef = dataChannel;
 
       (dataChannel as any).addEventListener('open', () => {
         logger.info('Data channel opened');
-        setConnectionState('connected');
-        onConnected?.();
+        setWebRTCState({ connectionState: 'connected' });
+        callbacksRef.onConnected?.();
       });
 
       (dataChannel as any).addEventListener('close', () => {
         logger.info('Data channel closed');
-        setConnectionState('disconnected');
-        onDisconnected?.();
+        setWebRTCState({ connectionState: 'disconnected' });
+        callbacksRef.onDisconnected?.();
       });
 
       (dataChannel as any).addEventListener('message', (event: any) => {
         try {
           const data = JSON.parse(event.data);
-          onDataChannelMessage?.(data);
+          callbacksRef.onDataChannelMessage?.(data);
         } catch (err) {
           logger.error('Failed to parse data channel message:', err);
         }
@@ -88,48 +112,46 @@ export function useWebRTCPlayer({
     (peerConnection as any).addEventListener('connectionstatechange', () => {
       logger.info('Connection state changed:', peerConnection.connectionState);
       if (peerConnection.connectionState === 'connected') {
-        setConnectionState('connected');
+        setWebRTCState({ connectionState: 'connected' });
       } else if (
         peerConnection.connectionState === 'failed' ||
         peerConnection.connectionState === 'disconnected'
       ) {
-        setConnectionState('disconnected');
-        onDisconnected?.();
+        setWebRTCState({ connectionState: 'disconnected' });
+        callbacksRef.onDisconnected?.();
       } else if (peerConnection.connectionState === 'connecting') {
-        setConnectionState('connecting');
+        setWebRTCState({ connectionState: 'connecting' });
       }
     });
 
-    peerConnectionRef.current = peerConnection;
+    peerConnectionRef = peerConnection;
     return peerConnection;
-  }, [sendSignalingMessage, onConnected, onDisconnected, onDataChannelMessage]);
+  }, [sendSignalingMessage, setWebRTCState]);
 
   const handleOffer = useCallback(
     async (offer: any) => {
       logger.info('Received offer from host');
 
-      if (!peerConnectionRef.current) {
+      if (!peerConnectionRef) {
         createPeerConnection();
       }
 
-      const peerConnection = peerConnectionRef.current;
+      const peerConnection = peerConnectionRef;
       if (!peerConnection) {
         logger.error('Failed to create peer connection');
         return;
       }
 
       try {
-        setConnectionState('connecting');
+        setWebRTCState({ connectionState: 'connecting' });
 
         await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
         logger.info('Remote description set');
 
         // Drain queued ICE candidates now that remote description is set
-        if (iceCandidateQueueRef.current.length > 0) {
-          logger.info(
-            `Adding ${iceCandidateQueueRef.current.length} queued ICE candidates`,
-          );
-          for (const candidate of iceCandidateQueueRef.current) {
+        if (iceCandidateQueueRef.length > 0) {
+          logger.info(`Adding ${iceCandidateQueueRef.length} queued ICE candidates`);
+          for (const candidate of iceCandidateQueueRef) {
             try {
               await peerConnection.addIceCandidate(
                 new RTCIceCandidate({
@@ -142,7 +164,7 @@ export function useWebRTCPlayer({
               logger.error('Failed to add queued ICE candidate:', err);
             }
           }
-          iceCandidateQueueRef.current = [];
+          iceCandidateQueueRef = [];
           logger.info('Queued ICE candidates processed');
         }
 
@@ -161,23 +183,23 @@ export function useWebRTCPlayer({
         logger.info('Answer sent to host');
       } catch (err) {
         logger.error('Failed to handle offer:', err);
-        setConnectionState('disconnected');
+        setWebRTCState({ connectionState: 'disconnected' });
       }
     },
-    [createPeerConnection, sendSignalingMessage],
+    [createPeerConnection, sendSignalingMessage, setWebRTCState],
   );
 
   const handleIceCandidate = useCallback(async (candidate: any) => {
     logger.info('Received ICE candidate from host');
 
-    if (!peerConnectionRef.current) {
+    if (!peerConnectionRef) {
       logger.info('Queueing ICE candidate until peer connection is ready');
-      iceCandidateQueueRef.current.push(candidate);
+      iceCandidateQueueRef.push(candidate);
       return;
     }
 
     try {
-      await peerConnectionRef.current.addIceCandidate(
+      await peerConnectionRef.addIceCandidate(
         new RTCIceCandidate({
           candidate: candidate.candidate,
           sdpMLineIndex: candidate.sdpMLineIndex,
@@ -218,9 +240,9 @@ export function useWebRTCPlayer({
   );
 
   const sendToHost = useCallback((data: any) => {
-    if (dataChannelRef.current?.readyState === 'open') {
+    if (dataChannelRef?.readyState === 'open') {
       try {
-        dataChannelRef.current.send(JSON.stringify(data));
+        dataChannelRef.send(JSON.stringify(data));
         console.log('Sent to host:', data);
       } catch (err) {
         logger.error('Failed to send to host:', err);
@@ -231,16 +253,16 @@ export function useWebRTCPlayer({
   }, []);
 
   const disconnect = useCallback(() => {
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.close();
-      peerConnectionRef.current = null;
+    if (peerConnectionRef) {
+      peerConnectionRef.close();
+      peerConnectionRef = null;
     }
-    if (dataChannelRef.current) {
-      dataChannelRef.current = null;
+    if (dataChannelRef) {
+      dataChannelRef = null;
     }
-    iceCandidateQueueRef.current = [];
-    setConnectionState('disconnected');
-  }, []);
+    iceCandidateQueueRef = [];
+    setWebRTCState({ connectionState: 'disconnected' });
+  }, [setWebRTCState]);
 
   return {
     connectionState,
