@@ -52,3 +52,6 @@ See [docs/webrtc-architecture.md](docs/webrtc-architecture.md) for complete arch
 - Real-time synchronization across all devices
 - Private information (hole cards) must only go to the correct player
 - Simple join flow for non-technical players at home games
+
+## Notes
+When working with poker-ts remember that table.isBettingRoundInProgress() throws an error if a hand is not already in progress - so we often want to check table.isHandInProgress() first. 
