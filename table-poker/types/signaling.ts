@@ -3,7 +3,8 @@ export type SignalingMessageType =
   | 'offer'
   | 'answer'
   | 'ice-candidate'
-  | 'player-connected';
+  | 'player-connected'
+  | 'error';
 
 export interface SignalingMessage {
   type: SignalingMessageType;
@@ -26,4 +27,9 @@ export interface IceCandidatePayload {
   candidate: string;
   sdpMLineIndex: number;
   sdpMid: string;
+}
+
+export interface ErrorPayload {
+  code: string;
+  message: string;
 }

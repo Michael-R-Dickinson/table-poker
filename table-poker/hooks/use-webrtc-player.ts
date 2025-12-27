@@ -192,6 +192,11 @@ export function useWebRTCPlayer({
 
   const handleSignalingMessage = useCallback(
     (message: SignalingMessage) => {
+      logger.info('Received signaling message:', {
+        type: message.type,
+        payload: message.payload,
+      });
+
       switch (message.type) {
         case 'offer':
           handleOffer(message.payload);
@@ -201,6 +206,9 @@ export function useWebRTCPlayer({
           break;
         case 'player-connected':
           logger.info('Player connection confirmed by host');
+          break;
+        case 'error':
+          logger.error('Signaling error received:', message.payload);
           break;
         default:
           logger.warn('Unknown message type:', message.type);

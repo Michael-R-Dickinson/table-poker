@@ -14,6 +14,7 @@ export default function JoinScreen() {
   const [playerName, setPlayerName] = useState('');
   const [isJoining, setIsJoining] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   const {
     connectionState: signalingState,
@@ -23,7 +24,14 @@ export default function JoinScreen() {
     sendMessage,
   } = useSignalingConnection({
     onMessage: (message) => {
-      handleSignalingMessage(message);
+      if (message.type === 'error') {
+        const errorPayload = message.payload as { code: string; message: string };
+        logger.error('Signaling error:', errorPayload);
+        setJoinError(errorPayload.message);
+        setIsJoining(false);
+      } else {
+        handleSignalingMessage(message);
+      }
     },
   });
 
@@ -74,6 +82,7 @@ export default function JoinScreen() {
       return;
     }
 
+    setJoinError(null);
     connect(playerName, gameCode.toUpperCase());
     setIsJoining(true);
 
@@ -210,7 +219,20 @@ export default function JoinScreen() {
             </ThemedText>
           </ThemedView>
 
-          {isJoined ? (
+          {joinError ? (
+            <ThemedView style={styles.errorContainer}>
+              <ThemedText style={styles.errorTitleText}>Connection Failed</ThemedText>
+              <ThemedText style={styles.errorMessageText}>{joinError}</ThemedText>
+              <View style={styles.buttonSpacer} />
+              <Button
+                title="Try Again"
+                onPress={() => {
+                  setJoinError(null);
+                  setIsJoining(false);
+                }}
+              />
+            </ThemedView>
+          ) : isJoined ? (
             <ThemedView style={styles.connectedContainer}>
               <ThemedText style={styles.connectedText}>Connected to Host!</ThemedText>
               <ThemedText style={styles.instructionText}>
@@ -308,6 +330,23 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FF9800',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 10,
+  },
+  errorTitleText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#F44336',
+  },
+  errorMessageText: {
+    fontSize: 14,
+    color: '#D32F2F',
+    marginTop: 8,
+    textAlign: 'center',
   },
   instructionText: {
     fontSize: 14,

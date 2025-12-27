@@ -141,15 +141,73 @@ def handle_message(event, connection_id):
                     break
 
             if not target_connection_id:
+                print(f"Host not found in game {game_id}")
+                # Send error message back to sender
+                domain = event.get('requestContext', {}).get('domainName')
+                stage = event.get('requestContext', {}).get('stage')
+
+                global apigateway_management
+                if apigateway_management is None:
+                    apigateway_management = boto3.client(
+                        'apigatewaymanagementapi',
+                        endpoint_url=f"https://{domain}/{stage}"
+                    )
+
+                error_message = {
+                    'type': 'error',
+                    'payload': {
+                        'code': 'HOST_NOT_FOUND',
+                        'message': 'No host found for this game code. Please check the code and try again.'
+                    }
+                }
+
+                try:
+                    apigateway_management.post_to_connection(
+                        ConnectionId=connection_id,
+                        Data=json.dumps(error_message).encode('utf-8')
+                    )
+                    print(f"Error message sent to {connection_id}")
+                except Exception as e:
+                    print(f"Failed to send error message: {str(e)}")
+
                 return {
-                    'statusCode': 404,
-                    'body': json.dumps({'error': 'Host not found in game'})
+                    'statusCode': 200,
+                    'body': json.dumps({'message': 'Error sent to client'})
                 }
 
             if target_connection_id == connection_id:
+                print(f"Host cannot join their own game")
+                # Send error message back to sender
+                domain = event.get('requestContext', {}).get('domainName')
+                stage = event.get('requestContext', {}).get('stage')
+
+                global apigateway_management
+                if apigateway_management is None:
+                    apigateway_management = boto3.client(
+                        'apigatewaymanagementapi',
+                        endpoint_url=f"https://{domain}/{stage}"
+                    )
+
+                error_message = {
+                    'type': 'error',
+                    'payload': {
+                        'code': 'INVALID_JOIN',
+                        'message': 'Host cannot join their own game.'
+                    }
+                }
+
+                try:
+                    apigateway_management.post_to_connection(
+                        ConnectionId=connection_id,
+                        Data=json.dumps(error_message).encode('utf-8')
+                    )
+                    print(f"Error message sent to {connection_id}")
+                except Exception as e:
+                    print(f"Failed to send error message: {str(e)}")
+
                 return {
-                    'statusCode': 400,
-                    'body': json.dumps({'error': 'Host cannot join their own game'})
+                    'statusCode': 200,
+                    'body': json.dumps({'message': 'Error sent to client'})
                 }
         else:
             # For other messages, targetId is required
