@@ -109,6 +109,12 @@ export function useWebRTCPlayer({
       (dataChannel as any).addEventListener('message', (event: any) => {
         try {
           const data = JSON.parse(event.data);
+
+          // Filter out ping/pong messages - these are handled by the heartbeat utility
+          if (data.type === 'ping' || data.type === 'pong') {
+            return;
+          }
+
           callbacksRef.onDataChannelMessage?.(data);
         } catch (err) {
           logger.error('Failed to parse data channel message:', err);

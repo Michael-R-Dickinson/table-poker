@@ -43,7 +43,7 @@ export function createDataChannelHeartbeat(config: HeartbeatConfig): HeartbeatCl
   // Send ping message
   const sendPing = () => {
     if (dataChannel.readyState !== 'open') {
-      logger.debug(`[${logPrefix}] Data channel not open, skipping ping`);
+      // logger.debug(`[${logPrefix}] Data channel not open, skipping ping`);
       return;
     }
 
@@ -55,9 +55,12 @@ export function createDataChannelHeartbeat(config: HeartbeatConfig): HeartbeatCl
       dataChannel.send(pingMessage);
       missedPongs++;
 
-      logger.debug(
-        `[${logPrefix}] Sent ping (missed pongs: ${missedPongs}/${MAX_MISSED_PONGS})`,
-      );
+      // Only log when missed pongs > 1 (potential issue)
+      if (missedPongs > 1) {
+        logger.debug(
+          `[${logPrefix}] Sent ping (missed pongs: ${missedPongs}/${MAX_MISSED_PONGS})`,
+        );
+      }
 
       // Check if we've exceeded the threshold
       if (missedPongs > MAX_MISSED_PONGS) {
@@ -84,14 +87,18 @@ export function createDataChannelHeartbeat(config: HeartbeatConfig): HeartbeatCl
           timestamp: Date.now(),
         });
         dataChannel.send(pongMessage);
-        logger.debug(`[${logPrefix}] Received ping, sent pong`);
+        // logger.debug(`[${logPrefix}] Received ping, sent pong`);
       } else if (data.type === 'pong') {
         // Reset missed pongs counter
         const previousMissed = missedPongs;
         missedPongs = 0;
-        logger.debug(
-          `[${logPrefix}] Received pong (reset from ${previousMissed} missed)`,
-        );
+
+        // Only log when recovering from missed pongs > 1
+        if (previousMissed > 1) {
+          logger.debug(
+            `[${logPrefix}] Received pong (reset from ${previousMissed} missed)`,
+          );
+        }
       }
     } catch (error) {
       // Not a JSON message or not a ping/pong message, ignore
@@ -105,7 +112,7 @@ export function createDataChannelHeartbeat(config: HeartbeatConfig): HeartbeatCl
   // Start ping interval
   pingInterval = setInterval(sendPing, PING_INTERVAL_MS);
 
-  logger.info(`[${logPrefix}] Heartbeat started`);
+  // logger.info(`[${logPrefix}] Heartbeat started`);
 
   // Cleanup function
   const cleanup = () => {
@@ -119,7 +126,7 @@ export function createDataChannelHeartbeat(config: HeartbeatConfig): HeartbeatCl
       messageListener = null;
     }
 
-    logger.info(`[${logPrefix}] Heartbeat stopped`);
+    // logger.info(`[${logPrefix}] Heartbeat stopped`);
   };
 
   return { cleanup };
