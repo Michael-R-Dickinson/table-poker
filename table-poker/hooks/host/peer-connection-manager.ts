@@ -4,7 +4,7 @@ import {
   RTCSessionDescription,
 } from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/shared/logger';
 
 export interface PeerConnectionInfo {
   connection: RTCPeerConnection;

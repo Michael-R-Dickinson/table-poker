@@ -2,7 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useAtom } from 'jotai';
 import { SIGNALING_SERVER_URL } from '@/constants/signaling';
 import type { SignalingMessage } from '@/types/signaling';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/shared/logger';
 import { signalingConnectionAtom } from '@/store/signaling-connection';
 import type { ConnectionState } from '@/store/signaling-connection';
 

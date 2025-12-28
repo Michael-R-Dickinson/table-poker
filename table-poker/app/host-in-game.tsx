@@ -1,16 +1,16 @@
 import { StyleSheet, View, Button, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useSignalingConnection } from '@/hooks/use-signaling-connection';
-import { useWebRTCHost } from '@/hooks/use-webrtc-host';
+import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
+import { useWebRTCHost } from '@/hooks/host/use-webrtc-host';
 import { useLocalSearchParams, router } from 'expo-router';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/shared/logger';
 import { useAtom } from 'jotai';
 import { pokerGameAtom } from '@/store/poker-game';
 import { Table } from 'poker-ts';
 import { useEffect, useMemo } from 'react';
-import { createGameControl } from '@/utils/game-control';
-import { useHostGameplay } from '@/hooks/use-host-gameplay';
+import { createGameControl } from '@/utils/host/game-control';
+import { useHostGameplay } from '@/hooks/host/use-host-gameplay';
 
 export default function HostInGameScreen() {
   const params = useLocalSearchParams();

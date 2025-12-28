@@ -1,5 +1,5 @@
 import type { SignalingMessage } from '@/types/signaling';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/shared/logger';
 import type { PeerConnectionInfo } from './peer-connection-manager';
 import {
   createPeerConnection,

@@ -2,11 +2,11 @@ import { StyleSheet, Button, View, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useSignalingConnection } from '@/hooks/use-signaling-connection';
-import { useWebRTCPlayer } from '@/hooks/use-webrtc-player';
-import { usePlayerGameplay } from '@/hooks/use-player-gameplay';
+import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
+import { useWebRTCPlayer } from '@/hooks/player/use-webrtc-player';
+import { usePlayerGameplay } from '@/hooks/player/use-player-gameplay';
 import { useMemo } from 'react';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/shared/logger';
 
 export default function PlayerInGameScreen() {
   const params = useLocalSearchParams();

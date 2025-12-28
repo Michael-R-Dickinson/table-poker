@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useEffect } from 'react';
 import { useAtom } from 'jotai';
 import type { SignalingMessage } from '@/types/signaling';
-import { logger } from '@/utils/logger';
-import type { PeerConnectionInfo } from './webrtc-host/peer-connection-manager';
-import { createSignalingHandlers } from './webrtc-host/signaling-handlers';
+import { logger } from '@/utils/shared/logger';
+import type { PeerConnectionInfo } from './peer-connection-manager';
+import { createSignalingHandlers } from './signaling-handlers';
 import { webrtcHostAtom } from '@/store/webrtc-host';
 
 interface UseWebRTCHostProps {

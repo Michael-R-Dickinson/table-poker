@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { StyleSheet, View, Button, FlatList, TextInput } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useSignalingConnection } from '@/hooks/use-signaling-connection';
-import { useWebRTCHost } from '@/hooks/use-webrtc-host';
+import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
+import { useWebRTCHost } from '@/hooks/host/use-webrtc-host';
 import { router } from 'expo-router';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/shared/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
 import { ROUTES } from '@/constants/routes';
 

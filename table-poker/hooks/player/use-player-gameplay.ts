@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useAtom } from 'jotai';
 import type { PlayerGameState, Action } from '@/types/game-state';
-import { logger } from '@/utils/logger';
+import { logger } from '@/utils/shared/logger';
 import { playerGameAtom } from '@/store/player-game';
 
 interface UsePlayerGameplayProps {

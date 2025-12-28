@@ -1,9 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import type { Table } from 'poker-ts';
 import type { PokerGameState } from '@/store/poker-game';
-import type { GameControlActions } from '@/utils/game-control';
-import { extractPlayerGameState } from '@/utils/game-state';
-import { logger } from '@/utils/logger';
+import type { GameControlActions } from '@/utils/host/game-control';
+import { extractPlayerGameState } from '@/utils/player/game-state';
+import { logger } from '@/utils/shared/logger';
 import type { Action } from '@/types/game-state';
 
 interface UseHostGameplayProps {
