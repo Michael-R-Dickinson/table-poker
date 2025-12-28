@@ -22,19 +22,7 @@ export function createGameControl(
         throw new Error('Poker table not initialized');
       }
 
-      if (pokerGame.table && pokerGame.table.isHandInProgress()) {
-        const cardsBefore = prev.table.communityCards();
-        updater(prev.table);
-        const cardsAfter = prev.table.communityCards();
-
-        console.log('[game-control] Mutation complete:', {
-          versionBefore: prev.version,
-          versionAfter: prev.version + 1,
-          cardsBeforeLength: cardsBefore.length,
-          cardsAfterLength: cardsAfter.length,
-          cardsAfter: cardsAfter,
-        });
-      }
+      updater(prev.table);
 
       return {
         table: prev.table,
