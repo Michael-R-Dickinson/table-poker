@@ -98,20 +98,36 @@ export default function HostInGameScreen() {
       table.isHandInProgress() && table.isBettingRoundInProgress();
 
     logger.info('Table state:', {
-      isHandInProgress: table.isHandInProgress(),
-      isBettingRoundInProgress: bettingRoundInProgress,
-      seats: table.seats(),
+      // isHandInProgress: table.isHandInProgress(),
+      // isBettingRoundInProgress: bettingRoundInProgress,
+      // seats: table.seats(),
       communityCards: table.communityCards(),
       version: pokerGame.version,
     });
   };
 
+  useEffect(() => {
+    logger.debug('CHANGE IN VERSION DETECTED', { version: pokerGame.version });
+    // consider just making it pokerGame?
+  }, [pokerGame.version]);
+
   const communityCards = useMemo(() => {
     if (!pokerGame.table || !pokerGame.table.isHandInProgress()) {
+      logger.debug('Short circuiting community cards - no hand in progress');
       return [];
     }
-    return pokerGame.table.communityCards();
+    const cards = pokerGame.table.communityCards();
+    logger.debug('Computing community cards from table', {
+      version: pokerGame.version,
+      cardsLength: cards.length,
+      cards: cards,
+    });
+    return cards;
   }, [pokerGame]);
+  logger.debug('Rendering HostInGameScreen', {
+    communityCards,
+    version: pokerGame.version,
+  });
 
   const formatCard = (card: any) => {
     if (!card) return '';

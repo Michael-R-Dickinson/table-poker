@@ -17,15 +17,29 @@ export function createGameControl(
   ) => void,
 ): GameControlActions {
   const updateGameState = (updater: (table: InstanceType<typeof Table>) => void) => {
-    if (!pokerGame.table) {
-      throw new Error('Poker table not initialized');
-    }
+    setPokerGame((prev) => {
+      if (!prev.table) {
+        throw new Error('Poker table not initialized');
+      }
 
-    updater(pokerGame.table);
+      if (pokerGame.table && pokerGame.table.isHandInProgress()) {
+        const cardsBefore = prev.table.communityCards();
+        updater(prev.table);
+        const cardsAfter = prev.table.communityCards();
 
-    setPokerGame({
-      table: pokerGame.table,
-      version: pokerGame.version + 1,
+        console.log('[game-control] Mutation complete:', {
+          versionBefore: prev.version,
+          versionAfter: prev.version + 1,
+          cardsBeforeLength: cardsBefore.length,
+          cardsAfterLength: cardsAfter.length,
+          cardsAfter: cardsAfter,
+        });
+      }
+
+      return {
+        table: prev.table,
+        version: prev.version + 1,
+      };
     });
   };
 

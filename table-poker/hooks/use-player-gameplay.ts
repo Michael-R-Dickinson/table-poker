@@ -14,7 +14,7 @@ export function usePlayerGameplay({ sendToHost }: UsePlayerGameplayProps) {
   const handleGameStateMessage = useCallback(
     (data: any) => {
       if (data.type === 'game-state') {
-        logger.info('Received game state update:', data.state);
+        // logger.info('Received game state update:', data.state);
         setPlayerGame({ gameState: data.state });
       }
     },

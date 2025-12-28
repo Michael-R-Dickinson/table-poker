@@ -35,7 +35,16 @@ export function useHostGameplay({
 
   // Broadcast game state to all players after any game state change
   useEffect(() => {
-    if (!pokerGame.table || !gameStarted) {
+    console.log('Game state change - preparing to broadcast', {
+      version: pokerGame.version,
+      gameStarted,
+      handInProgress: pokerGame.table?.isHandInProgress(),
+      communityCards: pokerGame.table?.isHandInProgress()
+        ? pokerGame.table?.communityCards()
+        : 'hand-not-in-progress',
+    });
+
+    if (!pokerGame.table || !pokerGame.table.isHandInProgress()) {
       return;
     }
 
@@ -65,10 +74,8 @@ export function useHostGameplay({
       const bettingRoundInProgress = pokerGame.table.isBettingRoundInProgress();
 
       if (!bettingRoundInProgress) {
-        const communityCards = pokerGame.table.communityCards();
-
         // If we have all 5 community cards, it's time for showdown
-        if (communityCards.length === 5) {
+        if (pokerGame.table.areBettingRoundsCompleted()) {
           logger.info('River betting complete, performing showdown');
 
           setTimeout(() => {
@@ -83,8 +90,10 @@ export function useHostGameplay({
           logger.info('Betting round complete, advancing to next round');
 
           setTimeout(() => {
+            logger.info('setTimeout fired, calling endBettingRound');
             try {
               gameControl.endBettingRound();
+              logger.info('endBettingRound completed successfully');
             } catch (error) {
               logger.error('Failed to end betting round:', error);
             }
@@ -129,6 +138,7 @@ export function useHostGameplay({
     setPlayerToSeatMap(newPlayerToSeatMap);
 
     // Start the first hand
+    logger.debug('Calling startHand - should immediately apply to table');
     gameControl.startHand();
     setGameStarted(true);
 
