@@ -5,12 +5,17 @@ import {
 } from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
 import { logger } from '@/utils/shared/logger';
+import {
+  createDataChannelHeartbeat,
+  HeartbeatCleanup,
+} from '@/utils/data-channel-heartbeat';
 
 export interface PeerConnectionInfo {
   connection: RTCPeerConnection;
   dataChannel: any;
   playerId: string;
   connectionState: 'connecting' | 'connected' | 'disconnected';
+  heartbeatCleanup?: () => void;
 }
 
 const ICE_SERVERS = {
@@ -54,12 +59,31 @@ export function createPeerConnection({
   (dataChannel as any).addEventListener('open', () => {
     logger.info(`Data channel opened for player: ${playerId}`);
     peerInfo.connectionState = 'connected';
+
+    // Start heartbeat
+    const { cleanup } = createDataChannelHeartbeat({
+      dataChannel,
+      onDisconnect: () => {
+        logger.warn(`Heartbeat timeout for player: ${playerId}`);
+        onDataChannelClose(playerId);
+      },
+      logPrefix: `Host->Player-${playerId}`,
+    });
+    peerInfo.heartbeatCleanup = cleanup;
+
     onDataChannelOpen(playerId);
   });
 
   (dataChannel as any).addEventListener('close', () => {
     logger.info(`Data channel closed for player: ${playerId}`);
     peerInfo.connectionState = 'disconnected';
+
+    // Clean up heartbeat
+    if (peerInfo.heartbeatCleanup) {
+      peerInfo.heartbeatCleanup();
+      peerInfo.heartbeatCleanup = undefined;
+    }
+
     onDataChannelClose(playerId);
   });
 
@@ -90,11 +114,8 @@ export function createPeerConnection({
       peerInfo.connectionState = 'connected';
     }
 
-    if (peerConnection.connectionState === 'failed') {
-      logger.info(`Data channel closed via failiure for player: ${playerId}`);
-      peerInfo.connectionState = 'disconnected';
-      onDataChannelClose(playerId);
-    }
+    // Ignore 'failed' state for temporary blips - heartbeat will handle timeouts
+    // Only data channel 'close' event triggers immediate disconnect
 
     onConnectionStateChange(playerId, peerConnection.connectionState);
   });

@@ -51,6 +51,14 @@ export function useWebRTCHost({
 
   const handleDisconnect = useCallback(
     (playerId: string) => {
+      const peerInfo = peerConnectionsRef.get(playerId);
+
+      // Clean up heartbeat if it exists (defensive cleanup)
+      if (peerInfo?.heartbeatCleanup) {
+        peerInfo.heartbeatCleanup();
+        peerInfo.heartbeatCleanup = undefined;
+      }
+
       peerConnectionsRef.delete(playerId);
       iceCandidateQueuesRef.delete(playerId);
       setWebRTCState((prev) => ({

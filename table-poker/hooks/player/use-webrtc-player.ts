@@ -10,6 +10,7 @@ import { logger } from '@/utils/shared/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
 import { webrtcPlayerAtom } from '@/store/webrtc-player';
 import type { PlayerConnectionState } from '@/store/webrtc-player';
+import { createDataChannelHeartbeat } from '@/utils/data-channel-heartbeat';
 
 const ICE_SERVERS = {
   iceServers: [
@@ -29,6 +30,7 @@ interface UseWebRTCPlayerProps {
 let peerConnectionRef: RTCPeerConnection | null = null;
 let dataChannelRef: any = null;
 let iceCandidateQueueRef: any[] = [];
+let heartbeatCleanupRef: (() => void) | null = null;
 let callbacksRef: {
   onConnected?: () => void;
   onDisconnected?: () => void;
@@ -75,11 +77,31 @@ export function useWebRTCPlayer({
       (dataChannel as any).addEventListener('open', () => {
         logger.info('Data channel opened');
         setWebRTCState({ connectionState: 'connected' });
+
+        // Start heartbeat
+        const { cleanup } = createDataChannelHeartbeat({
+          dataChannel,
+          onDisconnect: () => {
+            logger.warn('Heartbeat timeout - disconnected from host');
+            setWebRTCState({ connectionState: 'disconnected' });
+            callbacksRef.onDisconnected?.();
+          },
+          logPrefix: 'Player->Host',
+        });
+        heartbeatCleanupRef = cleanup;
+
         callbacksRef.onConnected?.();
       });
 
       (dataChannel as any).addEventListener('close', () => {
         logger.info('Data channel closed');
+
+        // Clean up heartbeat
+        if (heartbeatCleanupRef) {
+          heartbeatCleanupRef();
+          heartbeatCleanupRef = null;
+        }
+
         setWebRTCState({ connectionState: 'disconnected' });
         callbacksRef.onDisconnected?.();
       });
@@ -113,15 +135,12 @@ export function useWebRTCPlayer({
       logger.info('Connection state changed:', peerConnection.connectionState);
       if (peerConnection.connectionState === 'connected') {
         setWebRTCState({ connectionState: 'connected' });
-      } else if (
-        peerConnection.connectionState === 'failed' ||
-        peerConnection.connectionState === 'disconnected'
-      ) {
-        setWebRTCState({ connectionState: 'disconnected' });
-        callbacksRef.onDisconnected?.();
       } else if (peerConnection.connectionState === 'connecting') {
         setWebRTCState({ connectionState: 'connecting' });
       }
+
+      // Ignore 'failed' and 'disconnected' states for temporary blips
+      // Heartbeat will handle timeouts, and data channel 'close' event triggers immediate disconnect
     });
 
     peerConnectionRef = peerConnection;
@@ -253,6 +272,12 @@ export function useWebRTCPlayer({
   }, []);
 
   const disconnect = useCallback(() => {
+    // Clean up heartbeat if it exists (defensive cleanup)
+    if (heartbeatCleanupRef) {
+      heartbeatCleanupRef();
+      heartbeatCleanupRef = null;
+    }
+
     if (peerConnectionRef) {
       peerConnectionRef.close();
       peerConnectionRef = null;
