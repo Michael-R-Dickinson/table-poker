@@ -4,7 +4,7 @@ import {
   RTCSessionDescription,
 } from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
-import { logger } from '@/utils/shared/logger';
+import { webrtcLogger as logger } from '@/utils/shared/logger';
 import {
   createDataChannelHeartbeat,
   HeartbeatCleanup,

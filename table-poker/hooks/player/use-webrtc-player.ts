@@ -6,7 +6,7 @@ import {
   RTCIceCandidate,
 } from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
-import { logger } from '@/utils/shared/logger';
+import { webrtcLogger as logger } from '@/utils/shared/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
 import { webrtcPlayerAtom } from '@/store/webrtc-player';
 import type { PlayerConnectionState } from '@/store/webrtc-player';

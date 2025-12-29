@@ -36,6 +36,11 @@ const config = {
   printLevel: false,
   printDate: false,
   enabled: true,
+  extensionColors: {
+    webrtc: 'blue',
+  },
+  disabledExtensions: [], // Add extension names here to disable (e.g., ['webrtc'])
 };
 
 export const logger = rnLogger.createLogger(config);
+export const webrtcLogger = logger.extend('webrtc');

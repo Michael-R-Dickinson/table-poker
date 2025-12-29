@@ -1,4 +1,4 @@
-import { logger } from './shared/logger';
+import { webrtcLogger as logger } from './shared/logger';
 
 const PING_INTERVAL_MS = 3000; // Send ping every 3 seconds
 const MAX_MISSED_PONGS = 3; // Disconnect after 3 missed pongs (9 seconds)
