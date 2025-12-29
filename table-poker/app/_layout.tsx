@@ -17,6 +17,14 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen
+          name="host-in-game"
+          options={{ headerBackVisible: false, title: 'Host Game' }}
+        />
+        <Stack.Screen
+          name="player-in-game"
+          options={{ headerBackVisible: false, title: 'Player Game' }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
