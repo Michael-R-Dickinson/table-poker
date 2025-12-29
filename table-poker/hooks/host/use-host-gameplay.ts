@@ -31,6 +31,9 @@ export function useHostGameplay({
 }: UseHostGameplayProps) {
   const [playerToSeatMap, setPlayerToSeatMap] = useState<Map<string, number>>(new Map());
   const [gameStarted, setGameStarted] = useState(false);
+  const [lastPots, setLastPots] = useState<{ size: number; eligiblePlayers: number[] }[]>(
+    [],
+  );
   const previousVersionRef = useRef<number>(0);
 
   // Broadcast game state to all players after any game state change
@@ -46,78 +49,31 @@ export function useHostGameplay({
 
     previousVersionRef.current = pokerGame.version;
 
-    // Check if hand just ended (showdown completed or everyone folded)
-    if (!pokerGame.table.isHandInProgress()) {
-      const pots = pokerGame.table.pots();
-      const winners = pokerGame.table.winners();
-
-      logger.info('Hand ended', { pots, winners });
-
-      // Calculate winnings for each player
-      const playerWinnings = new Map<number, number>();
-
-      if (winners.length > 0) {
-        // Showdown occurred - match winners with pots
-        winners.forEach((potWinners, potIndex) => {
-          const pot = pots[potIndex];
-          const winnersCount = potWinners.length;
-          const amountPerWinner = Math.floor(pot.size / winnersCount);
-
-          potWinners.forEach(([seatIndex]) => {
-            const currentWinnings = playerWinnings.get(seatIndex) || 0;
-            playerWinnings.set(seatIndex, currentWinnings + amountPerWinner);
-          });
-        });
-      } else if (pots.length === 1 && pots[0].eligiblePlayers.length === 1) {
-        // Everyone folded - single winner
-        const winningSeat = pots[0].eligiblePlayers[0];
-        playerWinnings.set(winningSeat, pots[0].size);
-      }
-
-      // Convert to array format for broadcasting
-      const winningsArray = Array.from(playerWinnings.entries()).map(
-        ([seatIndex, amount]) => ({
-          seatIndex,
-          amount,
-        }),
-      );
-
-      logger.info('Broadcasting end-hand message', { winnings: winningsArray });
-
-      // Broadcast end-hand message to all players
-      broadcastToPlayers({
-        type: 'end-hand',
-        winners: winningsArray,
-      });
-
-      return;
-    }
-
-    if (!pokerGame.table.isHandInProgress()) {
-      return;
-    }
-
-    logger.info('Broadcasting game state to all players', {
-      version: pokerGame.version,
-      players: connectedPlayers.length,
-    });
-
-    // Send each player their specific game state
-    playerToSeatMap.forEach((seatIndex, playerId) => {
-      const gameState = extractPlayerGameState(pokerGame.table!, seatIndex);
-      sendToPlayer(playerId, {
-        type: 'game-state',
-        state: gameState,
-      });
-    });
-
-    // Check if betting round is complete and auto-progress
     if (pokerGame.table.isHandInProgress()) {
+      // Hand in progress - store pots and broadcast game state
+      const pots = pokerGame.table.pots();
+      setLastPots(pots);
+
+      logger.info('Broadcasting game state to all players', {
+        version: pokerGame.version,
+        players: connectedPlayers.length,
+      });
+
+      // Send each player their specific game state
+      playerToSeatMap.forEach((seatIndex, playerId) => {
+        const gameState = extractPlayerGameState(pokerGame.table!, seatIndex);
+        sendToPlayer(playerId, {
+          type: 'game-state',
+          state: gameState,
+        });
+      });
+
+      // Check if betting round is complete and auto-progress
       const bettingRoundInProgress = pokerGame.table.isBettingRoundInProgress();
 
       if (!bettingRoundInProgress) {
-        // If we have all 5 community cards, it's time for showdown
         if (pokerGame.table.areBettingRoundsCompleted()) {
+          // If we have all 5 community cards, it's time for showdown
           logger.info('River betting complete, performing showdown');
 
           setTimeout(() => {
@@ -142,6 +98,48 @@ export function useHostGameplay({
           }, 500);
         }
       }
+    } else {
+      // Hand ended - calculate and broadcast winnings
+      const winners = pokerGame.table.winners();
+
+      logger.info('Hand ended', { pots: lastPots, winners });
+
+      // Calculate winnings for each player
+      const playerWinnings = new Map<number, number>();
+
+      if (winners.length > 0) {
+        // Showdown occurred - match winners with pots
+        winners.forEach((potWinners, potIndex) => {
+          const pot = lastPots[potIndex];
+          const winnersCount = potWinners.length;
+          const amountPerWinner = Math.floor(pot.size / winnersCount);
+
+          potWinners.forEach(([seatIndex]) => {
+            const currentWinnings = playerWinnings.get(seatIndex) || 0;
+            playerWinnings.set(seatIndex, currentWinnings + amountPerWinner);
+          });
+        });
+      } else if (lastPots.length === 1 && lastPots[0].eligiblePlayers.length === 1) {
+        // Everyone folded - single winner
+        const winningSeat = lastPots[0].eligiblePlayers[0];
+        playerWinnings.set(winningSeat, lastPots[0].size);
+      }
+
+      // Convert to array format for broadcasting
+      const winningsArray = Array.from(playerWinnings.entries()).map(
+        ([seatIndex, amount]) => ({
+          seatIndex,
+          amount,
+        }),
+      );
+
+      logger.info('Broadcasting end-hand message', { winnings: winningsArray });
+
+      // Broadcast end-hand message to all players
+      broadcastToPlayers({
+        type: 'end-hand',
+        winners: winningsArray,
+      });
     }
   }, [
     pokerGame.version,
@@ -152,6 +150,7 @@ export function useHostGameplay({
     connectedPlayers,
     gameControl,
     broadcastToPlayers,
+    lastPots,
   ]);
 
   const startGame = useCallback(() => {
