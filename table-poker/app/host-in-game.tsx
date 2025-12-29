@@ -78,6 +78,14 @@ export default function HostInGameScreen() {
     });
   }, [smallBlind, bigBlind, buyIn]);
 
+  // Auto-start game when table is ready and we have players
+  useEffect(() => {
+    if (pokerGame.table && connectedPlayers.length >= 2 && !gameStarted) {
+      logger.info('Auto-starting game');
+      startGame();
+    }
+  }, [pokerGame.table, connectedPlayers.length, gameStarted, startGame]);
+
   const handleEndGame = () => {
     broadcastToPlayers({
       type: 'game_end',
@@ -170,39 +178,20 @@ export default function HostInGameScreen() {
         </ThemedView>
       </ThemedView>
 
-      {!gameStarted && (
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle">Game Setup</ThemedText>
-          <Button
-            title="Start Game"
-            onPress={startGame}
-            color="#4CAF50"
-            disabled={connectedPlayers.length < 2}
-          />
-          {connectedPlayers.length < 2 && (
-            <ThemedText style={styles.warningText}>
-              Need at least 2 players to start
-            </ThemedText>
+      <ThemedView style={styles.section}>
+        <ThemedText type="subtitle">Community Cards</ThemedText>
+        <View style={styles.communityCardsContainer}>
+          {communityCards.length === 0 ? (
+            <ThemedText style={styles.emptyText}>No community cards yet</ThemedText>
+          ) : (
+            communityCards.map((card, index) => (
+              <View key={index} style={styles.card}>
+                <ThemedText style={styles.cardText}>{formatCard(card)}</ThemedText>
+              </View>
+            ))
           )}
-        </ThemedView>
-      )}
-
-      {gameStarted && (
-        <ThemedView style={styles.section}>
-          <ThemedText type="subtitle">Community Cards</ThemedText>
-          <View style={styles.communityCardsContainer}>
-            {communityCards.length === 0 ? (
-              <ThemedText style={styles.emptyText}>No community cards yet</ThemedText>
-            ) : (
-              communityCards.map((card, index) => (
-                <View key={index} style={styles.card}>
-                  <ThemedText style={styles.cardText}>{formatCard(card)}</ThemedText>
-                </View>
-              ))
-            )}
-          </View>
-        </ThemedView>
-      )}
+        </View>
+      </ThemedView>
 
       <ThemedView style={styles.section}>
         <ThemedText type="subtitle">Players ({connectedPlayers.length})</ThemedText>
@@ -312,11 +301,5 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
-  },
-  warningText: {
-    color: '#ff9800',
-    textAlign: 'center',
-    marginTop: 10,
-    fontStyle: 'italic',
   },
 });
