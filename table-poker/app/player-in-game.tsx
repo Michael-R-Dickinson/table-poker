@@ -62,9 +62,14 @@ export default function PlayerInGameScreen() {
     return `${rank}${suit}`;
   };
 
+  const otherPlayers = useMemo(() => {
+    if (!gameState) return [];
+    return gameState.players.filter((p) => p.seatIndex !== gameState.mySeatIndex);
+  }, [gameState]);
+
   const myPlayerInfo = useMemo(() => {
     if (!gameState) return null;
-    return gameState.players.find((p) => p.seatIndex === gameState.playerToAct);
+    return gameState.players.find((p) => p.seatIndex === gameState.mySeatIndex);
   }, [gameState]);
 
   const isMyTurn = useMemo(() => {
@@ -74,16 +79,26 @@ export default function PlayerInGameScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">Game In Progress</ThemedText>
-      </ThemedView>
-
-      <ThemedView style={styles.gameInfoContainer}>
-        <ThemedText type="subtitle">Game Code: {gameCode}</ThemedText>
-        <ThemedText style={styles.playerNameText}>Playing as: {playerName}</ThemedText>
-        <ThemedText style={styles.statusText}>
-          {connectionState === 'connected' ? 'Connected' : 'Connecting...'}
-        </ThemedText>
+      <ThemedView style={styles.topBar}>
+        <View style={styles.infoBlock}>
+          <ThemedText style={styles.infoBlockLabel}>Game</ThemedText>
+          <ThemedText style={styles.infoBlockValue}>{gameCode}</ThemedText>
+        </View>
+        <View style={styles.infoBlock}>
+          <ThemedText style={styles.infoBlockLabel}>Player</ThemedText>
+          <ThemedText style={styles.infoBlockValue}>{playerName}</ThemedText>
+        </View>
+        <View style={styles.infoBlock}>
+          <ThemedText style={styles.infoBlockLabel}>Status</ThemedText>
+          <ThemedText
+            style={[
+              styles.infoBlockValue,
+              { color: connectionState === 'connected' ? '#4CAF50' : '#FF9800' },
+            ]}
+          >
+            {connectionState === 'connected' ? 'Connected' : 'Connecting...'}
+          </ThemedText>
+        </View>
       </ThemedView>
 
       {!gameState && (
@@ -94,6 +109,34 @@ export default function PlayerInGameScreen() {
 
       {gameState && (
         <>
+          {otherPlayers.length > 0 && (
+            <ThemedView style={styles.section}>
+              <ThemedText type="subtitle">Other Players</ThemedText>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.otherPlayersContainer}>
+                  {otherPlayers.map((player) => (
+                    <View key={player.seatIndex} style={styles.playerCard}>
+                      <ThemedText style={styles.playerCardName}>
+                        Seat {player.seatIndex}
+                      </ThemedText>
+                      <ThemedText style={styles.playerCardStat}>
+                        Stack: {player.stack}
+                      </ThemedText>
+                      <ThemedText style={styles.playerCardStat}>
+                        Bet: {player.currentBet}
+                      </ThemedText>
+                      <View style={styles.playerCardStatusContainer}>
+                        <ThemedText style={styles.playerCardStatus}>
+                          {player.status}
+                        </ThemedText>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            </ThemedView>
+          )}
+
           <ThemedView style={styles.section}>
             <ThemedText type="subtitle">Your Hole Cards</ThemedText>
             <View style={styles.holeCardsContainer}>
@@ -107,19 +150,6 @@ export default function PlayerInGameScreen() {
                 <ThemedText style={styles.emptyText}>No cards yet</ThemedText>
               )}
             </View>
-          </ThemedView>
-
-          <ThemedView style={styles.section}>
-            <ThemedText type="subtitle">Players</ThemedText>
-            {gameState.players.map((player) => (
-              <View key={player.seatIndex} style={styles.playerItem}>
-                <ThemedText style={styles.playerText}>
-                  Seat {player.seatIndex} - Stack: {player.stack} - Bet:{' '}
-                  {player.currentBet}
-                </ThemedText>
-                <ThemedText style={styles.statusBadge}>{player.status}</ThemedText>
-              </View>
-            ))}
           </ThemedView>
 
           {isMyTurn && gameState.availableActions && (
@@ -201,20 +231,29 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
   },
-  header: {
-    marginBottom: 20,
-  },
-  gameInfoContainer: {
-    padding: 20,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 20,
+  topBar: {
+    flexDirection: 'row',
     gap: 8,
+    marginBottom: 20,
   },
-  playerNameText: {
-    fontSize: 16,
+  infoBlock: {
+    flex: 1,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+  },
+  infoBlockLabel: {
+    fontSize: 11,
     color: '#666',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  infoBlockValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
   },
   statusContainer: {
     flex: 1,
@@ -229,6 +268,44 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
     gap: 10,
+  },
+  otherPlayersContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  playerCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    minWidth: 110,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    gap: 6,
+  },
+  playerCardName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  playerCardStat: {
+    fontSize: 12,
+    color: '#333',
+  },
+  playerCardStatusContainer: {
+    marginTop: 4,
+    alignItems: 'center',
+  },
+  playerCardStatus: {
+    fontSize: 11,
+    color: '#666',
+    backgroundColor: '#e0e0e0',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    textAlign: 'center',
   },
   holeCardsContainer: {
     flexDirection: 'row',
@@ -254,26 +331,6 @@ const styles = StyleSheet.create({
     color: '#999',
     fontStyle: 'italic',
     marginTop: 10,
-  },
-  playerItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-    marginVertical: 4,
-  },
-  playerText: {
-    fontSize: 14,
-  },
-  statusBadge: {
-    fontSize: 12,
-    color: '#666',
-    backgroundColor: '#e0e0e0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
   },
   actionsGrid: {
     flexDirection: 'row',

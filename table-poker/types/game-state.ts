@@ -20,6 +20,7 @@ export interface PlayerInfo {
 }
 
 export interface PlayerGameState {
+  mySeatIndex: number;
   holeCards: Card[] | null;
   playerToAct: number | null;
   availableActions: Action[] | null;

@@ -80,6 +80,7 @@ export function extractPlayerGameState(
     .filter((p): p is PlayerInfo => p !== null);
 
   return {
+    mySeatIndex: playerSeatIndex,
     holeCards: playerHoleCards,
     playerToAct,
     availableActions,
