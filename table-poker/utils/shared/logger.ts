@@ -15,7 +15,7 @@ console.log = (...args: any[]) => {
 };
 
 // Disabled extensions configuration
-const disabledExtensions: string[] = ['webrtc'];
+const disabledExtensions: string[] = [];
 
 // Custom transport with formatted output
 const customTransport = (props: any) => {
@@ -36,7 +36,7 @@ const customTransport = (props: any) => {
   // Format message with extension label if present (extension is a string)
   const extensionLabel = extension ? `[${extension}] ` : '';
   const message = typeof msg === 'object' ? JSON.stringify(msg) : msg;
-  const formattedMessage = `${timestamp} [${deviceName}] ${extensionLabel}${level.text.toUpperCase()} | ${message}`;
+  const formattedMessage = `${timestamp} [${deviceName}] ${level.text.toUpperCase()} | ${message}`;
 
   // Output to console
   const consoleMethod = (console as any)[level.text] || console.log;

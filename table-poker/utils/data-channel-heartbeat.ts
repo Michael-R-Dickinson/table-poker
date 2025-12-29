@@ -1,4 +1,4 @@
-import { webrtcLogger as logger } from './shared/logger';
+import { webrtcLogger, logger as mainLogger } from './shared/logger';
 
 const PING_INTERVAL_MS = 3000; // Send ping every 3 seconds
 const MAX_MISSED_PONGS = 3; // Disconnect after 3 missed pongs (9 seconds)
@@ -57,21 +57,24 @@ export function createDataChannelHeartbeat(config: HeartbeatConfig): HeartbeatCl
 
       // Only log when missed pongs > 1 (potential issue)
       if (missedPongs > 1) {
-        logger.debug(
+        webrtcLogger.debug(
           `[${logPrefix}] Sent ping (missed pongs: ${missedPongs}/${MAX_MISSED_PONGS})`,
         );
       }
 
       // Check if we've exceeded the threshold
       if (missedPongs > MAX_MISSED_PONGS) {
-        logger.warn(
+        webrtcLogger.warn(
           `[${logPrefix}] Exceeded max missed pongs (${MAX_MISSED_PONGS}), triggering disconnect`,
         );
         cleanup();
         onDisconnect();
       }
     } catch (error) {
-      logger.error(`[${logPrefix}] Failed to send ping:`, error);
+      mainLogger.error(`[${logPrefix}] Failed to send ping:`, {
+        error,
+        logPrefix,
+      });
     }
   };
 
@@ -95,7 +98,7 @@ export function createDataChannelHeartbeat(config: HeartbeatConfig): HeartbeatCl
 
         // Only log when recovering from missed pongs > 1
         if (previousMissed > 1) {
-          logger.debug(
+          webrtcLogger.debug(
             `[${logPrefix}] Received pong (reset from ${previousMissed} missed)`,
           );
         }

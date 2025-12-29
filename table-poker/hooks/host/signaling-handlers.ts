@@ -1,5 +1,5 @@
 import type { SignalingMessage } from '@/types/signaling';
-import { webrtcLogger as logger } from '@/utils/shared/logger';
+import { webrtcLogger, logger as mainLogger } from '@/utils/shared/logger';
 import type { PeerConnectionInfo } from './peer-connection-manager';
 import {
   createPeerConnection,
@@ -28,10 +28,10 @@ export function createSignalingHandlers(deps: SignalingHandlerDependencies) {
   } = deps;
 
   const handlePlayerJoin = async (playerId: string) => {
-    logger.info(`Player joining: ${playerId}`);
+    webrtcLogger.debug(`Player joining: ${playerId}`);
 
     if (peerConnectionsRef.current.has(playerId)) {
-      logger.info(`Player ${playerId} already has a connection`);
+      webrtcLogger.debug(`Player ${playerId} already has a connection`);
       return;
     }
 
@@ -78,18 +78,24 @@ export function createSignalingHandlers(deps: SignalingHandlerDependencies) {
         });
       });
     } catch (err) {
-      logger.error(`Failed to create offer for ${playerId}:`, err);
+      mainLogger.error(`Failed to create offer for ${playerId}:`, {
+        error: err,
+        playerId,
+      });
       peerConnectionsRef.current.delete(playerId);
       iceCandidateQueuesRef.current.delete(playerId);
     }
   };
 
   const handleAnswer = async (playerId: string, answer: any) => {
-    logger.info(`Received answer from player: ${playerId}`);
+    webrtcLogger.debug(`Received answer from player: ${playerId}`);
 
     const peerInfo = peerConnectionsRef.current.get(playerId);
     if (!peerInfo) {
-      logger.error(`No peer connection found for player: ${playerId}`);
+      mainLogger.error(`No peer connection found for player: ${playerId}`, {
+        playerId,
+        answer,
+      });
       return;
     }
 
@@ -99,21 +105,28 @@ export function createSignalingHandlers(deps: SignalingHandlerDependencies) {
       await handleAnswerForPeer(peerInfo, answer, queue);
       iceCandidateQueuesRef.current.set(playerId, []);
     } catch (err) {
-      logger.error(`Error handling answer for ${playerId}:`, err);
+      mainLogger.error(`Error handling answer for ${playerId}:`, {
+        error: err,
+        playerId,
+        answer,
+      });
     }
   };
 
   const handleIceCandidate = async (playerId: string, candidate: any) => {
-    logger.info(`Received ICE candidate from player: ${playerId}`);
+    webrtcLogger.debug(`Received ICE candidate from player: ${playerId}`);
 
     const peerInfo = peerConnectionsRef.current.get(playerId);
     if (!peerInfo) {
-      logger.error(`No peer connection found for player: ${playerId}`);
+      mainLogger.error(`No peer connection found for player: ${playerId}`, {
+        playerId,
+        candidate,
+      });
       return;
     }
 
     if (!peerInfo.connection.remoteDescription) {
-      logger.info(
+      webrtcLogger.debug(
         `Queueing ICE candidate for ${playerId} until remote description is set`,
       );
       const queue = iceCandidateQueuesRef.current.get(playerId) || [];
@@ -125,14 +138,20 @@ export function createSignalingHandlers(deps: SignalingHandlerDependencies) {
     try {
       await addIceCandidate(peerInfo, candidate);
     } catch (err) {
-      logger.error(`Error adding ICE candidate for ${playerId}:`, err);
+      mainLogger.error(`Error adding ICE candidate for ${playerId}:`, {
+        error: err,
+        playerId,
+        candidate,
+      });
     }
   };
 
   const handleSignalingMessage = (message: SignalingMessage) => {
     const senderId = message.senderId;
     if (!senderId) {
-      logger.error('Received message without senderId');
+      mainLogger.error('Received message without senderId', {
+        message,
+      });
       return;
     }
 
@@ -147,7 +166,7 @@ export function createSignalingHandlers(deps: SignalingHandlerDependencies) {
         handleIceCandidate(senderId, message.payload);
         break;
       default:
-        logger.warn('Unknown message type:', message.type);
+        webrtcLogger.debug('Unknown message type:', message.type);
     }
   };
 

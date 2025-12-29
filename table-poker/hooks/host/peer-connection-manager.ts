@@ -4,7 +4,7 @@ import {
   RTCSessionDescription,
 } from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
-import { webrtcLogger as logger } from '@/utils/shared/logger';
+import { webrtcLogger, logger as mainLogger } from '@/utils/shared/logger';
 import {
   createDataChannelHeartbeat,
   HeartbeatCleanup,
@@ -42,7 +42,7 @@ export function createPeerConnection({
   onDataChannelClose,
   onDataChannelMessage,
 }: CreatePeerConnectionOptions): PeerConnectionInfo {
-  logger.info(`Creating peer connection for player: ${playerId}`);
+  webrtcLogger.debug(`Creating peer connection for player: ${playerId}`);
 
   const peerConnection = new RTCPeerConnection(ICE_SERVERS);
   const dataChannel = peerConnection.createDataChannel('game-data', {
@@ -57,14 +57,14 @@ export function createPeerConnection({
   };
 
   (dataChannel as any).addEventListener('open', () => {
-    logger.info(`Data channel opened for player: ${playerId}`);
+    webrtcLogger.debug(`Data channel opened for player: ${playerId}`);
     peerInfo.connectionState = 'connected';
 
     // Start heartbeat
     const { cleanup } = createDataChannelHeartbeat({
       dataChannel,
       onDisconnect: () => {
-        logger.warn(`Heartbeat timeout for player: ${playerId}`);
+        webrtcLogger.warn(`Heartbeat timeout for player: ${playerId}`);
         onDataChannelClose(playerId);
       },
       logPrefix: `Host->Player-${playerId}`,
@@ -75,7 +75,7 @@ export function createPeerConnection({
   });
 
   (dataChannel as any).addEventListener('close', () => {
-    logger.info(`Data channel closed for player: ${playerId}`);
+    webrtcLogger.debug(`Data channel closed for player: ${playerId}`);
     peerInfo.connectionState = 'disconnected';
 
     // Clean up heartbeat
@@ -98,19 +98,23 @@ export function createPeerConnection({
 
       onDataChannelMessage(playerId, data);
     } catch (err) {
-      logger.error(`Failed to parse data channel message from ${playerId}:`, err);
+      mainLogger.error(`Failed to parse data channel message from ${playerId}:`, {
+        error: err,
+        playerId,
+        rawData: event.data,
+      });
     }
   });
 
   (peerConnection as any).addEventListener('icecandidate', (event: any) => {
     if (event.candidate) {
-      logger.info(`Sending ICE candidate to player: ${playerId}`);
+      webrtcLogger.debug(`Sending ICE candidate to player: ${playerId}`);
       onIceCandidate(playerId, event.candidate);
     }
   });
 
   (peerConnection as any).addEventListener('connectionstatechange', () => {
-    logger.info(
+    webrtcLogger.debug(
       `Connection state changed for ${playerId}:`,
       peerConnection.connectionState,
       `Data channel state: ${dataChannel.readyState}`,
@@ -137,10 +141,13 @@ export async function createOfferForPlayer(
     const offer = await peerInfo.connection.createOffer();
     await peerInfo.connection.setLocalDescription(offer);
 
-    logger.info(`Sending offer to player: ${peerInfo.playerId}`);
+    webrtcLogger.debug(`Sending offer to player: ${peerInfo.playerId}`);
     sendOffer(peerInfo.playerId, offer.sdp!);
   } catch (err) {
-    logger.error(`Failed to create offer for ${peerInfo.playerId}:`, err);
+    mainLogger.error(`Failed to create offer for ${peerInfo.playerId}:`, {
+      error: err,
+      playerId: peerInfo.playerId,
+    });
     throw err;
   }
 }
@@ -150,14 +157,14 @@ export async function handleAnswer(
   answer: any,
   iceCandidateQueue: any[],
 ): Promise<void> {
-  logger.info(`Setting remote description for player: ${peerInfo.playerId}`);
+  webrtcLogger.debug(`Setting remote description for player: ${peerInfo.playerId}`);
 
   try {
     await peerInfo.connection.setRemoteDescription(new RTCSessionDescription(answer));
-    logger.info(`Remote description set for player: ${peerInfo.playerId}`);
+    webrtcLogger.debug(`Remote description set for player: ${peerInfo.playerId}`);
 
     if (iceCandidateQueue.length > 0) {
-      logger.info(
+      webrtcLogger.debug(
         `Adding ${iceCandidateQueue.length} queued ICE candidates for ${peerInfo.playerId}`,
       );
       for (const candidate of iceCandidateQueue) {
@@ -170,16 +177,24 @@ export async function handleAnswer(
             }),
           );
         } catch (err) {
-          logger.error(
+          mainLogger.error(
             `Failed to add queued ICE candidate for ${peerInfo.playerId}:`,
-            err,
+            {
+              error: err,
+              playerId: peerInfo.playerId,
+              candidate,
+            },
           );
         }
       }
-      logger.info(`Queued ICE candidates processed for ${peerInfo.playerId}`);
+      webrtcLogger.debug(`Queued ICE candidates processed for ${peerInfo.playerId}`);
     }
   } catch (err) {
-    logger.error(`Failed to set remote description for ${peerInfo.playerId}:`, err);
+    mainLogger.error(`Failed to set remote description for ${peerInfo.playerId}:`, {
+      error: err,
+      playerId: peerInfo.playerId,
+      answer,
+    });
     throw err;
   }
 }
@@ -196,9 +211,13 @@ export async function addIceCandidate(
         sdpMid: candidate.sdpMid,
       }),
     );
-    logger.info(`ICE candidate added for player: ${peerInfo.playerId}`);
+    webrtcLogger.debug(`ICE candidate added for player: ${peerInfo.playerId}`);
   } catch (err) {
-    logger.error(`Failed to add ICE candidate for ${peerInfo.playerId}:`, err);
+    mainLogger.error(`Failed to add ICE candidate for ${peerInfo.playerId}:`, {
+      error: err,
+      playerId: peerInfo.playerId,
+      candidate,
+    });
     throw err;
   }
 }

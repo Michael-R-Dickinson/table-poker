@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useEffect } from 'react';
 import { useAtom } from 'jotai';
 import type { SignalingMessage } from '@/types/signaling';
-import { webrtcLogger as logger } from '@/utils/shared/logger';
+import { webrtcLogger, logger as mainLogger } from '@/utils/shared/logger';
 import type { PeerConnectionInfo } from './peer-connection-manager';
 import { createSignalingHandlers } from './signaling-handlers';
 import { webrtcHostAtom } from '@/store/webrtc-host';
@@ -91,7 +91,11 @@ export function useWebRTCHost({
         try {
           peerInfo.dataChannel.send(message);
         } catch (err) {
-          logger.error(`Failed to send to player ${playerId}:`, err);
+          mainLogger.error(`Failed to send to player ${playerId}:`, {
+            error: err,
+            playerId,
+            data,
+          });
         }
       }
     });
@@ -103,10 +107,14 @@ export function useWebRTCHost({
       try {
         peerInfo.dataChannel.send(JSON.stringify(data));
       } catch (err) {
-        logger.error(`Failed to send to player ${playerId}:`, err);
+        mainLogger.error(`Failed to send to player ${playerId}:`, {
+          error: err,
+          playerId,
+          data,
+        });
       }
     } else {
-      logger.error(`Player ${playerId} is not connected or data channel not open`);
+      webrtcLogger.warn(`Player ${playerId} is not connected or data channel not open`);
     }
   }, []);
 

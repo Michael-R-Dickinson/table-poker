@@ -6,7 +6,7 @@ import {
   RTCIceCandidate,
 } from 'react-native-webrtc';
 import type { SignalingMessage } from '@/types/signaling';
-import { webrtcLogger as logger } from '@/utils/shared/logger';
+import { webrtcLogger, logger as mainLogger } from '@/utils/shared/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
 import { webrtcPlayerAtom } from '@/store/webrtc-player';
 import type { PlayerConnectionState } from '@/store/webrtc-player';
@@ -62,7 +62,7 @@ export function useWebRTCPlayer({
   );
 
   const createPeerConnection = useCallback(() => {
-    logger.info('Creating peer connection to host');
+    webrtcLogger.debug('Creating peer connection to host');
 
     // Clear any queued ICE candidates from previous connection attempts
     iceCandidateQueueRef = [];
@@ -70,19 +70,19 @@ export function useWebRTCPlayer({
     const peerConnection = new RTCPeerConnection(ICE_SERVERS);
 
     (peerConnection as any).addEventListener('datachannel', (event: any) => {
-      logger.info('Data channel received from host');
+      webrtcLogger.debug('Data channel received from host');
       const dataChannel = event.channel;
       dataChannelRef = dataChannel;
 
       (dataChannel as any).addEventListener('open', () => {
-        logger.info('Data channel opened');
+        webrtcLogger.debug('Data channel opened');
         setWebRTCState({ connectionState: 'connected' });
 
         // Start heartbeat
         const { cleanup } = createDataChannelHeartbeat({
           dataChannel,
           onDisconnect: () => {
-            logger.warn('Heartbeat timeout - disconnected from host');
+            webrtcLogger.warn('Heartbeat timeout - disconnected from host');
             setWebRTCState({ connectionState: 'disconnected' });
             callbacksRef.onDisconnected?.();
           },
@@ -94,7 +94,7 @@ export function useWebRTCPlayer({
       });
 
       (dataChannel as any).addEventListener('close', () => {
-        logger.info('Data channel closed');
+        webrtcLogger.debug('Data channel closed');
 
         // Clean up heartbeat
         if (heartbeatCleanupRef) {
@@ -117,14 +117,17 @@ export function useWebRTCPlayer({
 
           callbacksRef.onDataChannelMessage?.(data);
         } catch (err) {
-          logger.error('Failed to parse data channel message:', err);
+          mainLogger.error('Failed to parse data channel message:', {
+            error: err,
+            rawData: event.data,
+          });
         }
       });
     });
 
     (peerConnection as any).addEventListener('icecandidate', (event: any) => {
       if (event.candidate) {
-        logger.info('Sending ICE candidate to host');
+        webrtcLogger.debug('Sending ICE candidate to host');
         sendSignalingMessage({
           type: 'ice-candidate',
           targetId: HOST_PLAYER_ID,
@@ -138,7 +141,7 @@ export function useWebRTCPlayer({
     });
 
     (peerConnection as any).addEventListener('connectionstatechange', () => {
-      logger.info('Connection state changed:', peerConnection.connectionState);
+      webrtcLogger.debug('Connection state changed:', peerConnection.connectionState);
       if (peerConnection.connectionState === 'connected') {
         setWebRTCState({ connectionState: 'connected' });
       } else if (peerConnection.connectionState === 'connecting') {
@@ -155,7 +158,7 @@ export function useWebRTCPlayer({
 
   const handleOffer = useCallback(
     async (offer: any) => {
-      logger.info('Received offer from host');
+      webrtcLogger.debug('Received offer from host');
 
       if (!peerConnectionRef) {
         createPeerConnection();
@@ -163,7 +166,7 @@ export function useWebRTCPlayer({
 
       const peerConnection = peerConnectionRef;
       if (!peerConnection) {
-        logger.error('Failed to create peer connection');
+        mainLogger.error('Failed to create peer connection');
         return;
       }
 
@@ -171,11 +174,13 @@ export function useWebRTCPlayer({
         setWebRTCState({ connectionState: 'connecting' });
 
         await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-        logger.info('Remote description set');
+        webrtcLogger.debug('Remote description set');
 
         // Drain queued ICE candidates now that remote description is set
         if (iceCandidateQueueRef.length > 0) {
-          logger.info(`Adding ${iceCandidateQueueRef.length} queued ICE candidates`);
+          webrtcLogger.debug(
+            `Adding ${iceCandidateQueueRef.length} queued ICE candidates`,
+          );
           for (const candidate of iceCandidateQueueRef) {
             try {
               await peerConnection.addIceCandidate(
@@ -186,16 +191,19 @@ export function useWebRTCPlayer({
                 }),
               );
             } catch (err) {
-              logger.error('Failed to add queued ICE candidate:', err);
+              mainLogger.error('Failed to add queued ICE candidate:', {
+                error: err,
+                candidate,
+              });
             }
           }
           iceCandidateQueueRef = [];
-          logger.info('Queued ICE candidates processed');
+          webrtcLogger.debug('Queued ICE candidates processed');
         }
 
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
-        logger.info('Local description set');
+        webrtcLogger.debug('Local description set');
 
         sendSignalingMessage({
           type: 'answer',
@@ -205,9 +213,12 @@ export function useWebRTCPlayer({
             type: 'answer',
           },
         });
-        logger.info('Answer sent to host');
+        webrtcLogger.debug('Answer sent to host');
       } catch (err) {
-        logger.error('Failed to handle offer:', err);
+        mainLogger.error('Failed to handle offer:', {
+          error: err,
+          offer,
+        });
         setWebRTCState({ connectionState: 'disconnected' });
       }
     },
@@ -215,10 +226,10 @@ export function useWebRTCPlayer({
   );
 
   const handleIceCandidate = useCallback(async (candidate: any) => {
-    logger.info('Received ICE candidate from host');
+    webrtcLogger.debug('Received ICE candidate from host');
 
     if (!peerConnectionRef) {
-      logger.info('Queueing ICE candidate until peer connection is ready');
+      webrtcLogger.debug('Queueing ICE candidate until peer connection is ready');
       iceCandidateQueueRef.push(candidate);
       return;
     }
@@ -231,15 +242,18 @@ export function useWebRTCPlayer({
           sdpMid: candidate.sdpMid,
         }),
       );
-      logger.info('ICE candidate added');
+      webrtcLogger.debug('ICE candidate added');
     } catch (err) {
-      logger.error('Failed to add ICE candidate:', err);
+      mainLogger.error('Failed to add ICE candidate:', {
+        error: err,
+        candidate,
+      });
     }
   }, []);
 
   const handleSignalingMessage = useCallback(
     (message: SignalingMessage) => {
-      logger.info('Received signaling message:', {
+      webrtcLogger.debug('Received signaling message:', {
         type: message.type,
         payload: message.payload,
       });
@@ -252,13 +266,15 @@ export function useWebRTCPlayer({
           handleIceCandidate(message.payload);
           break;
         case 'player-connected':
-          logger.info('Player connection confirmed by host');
+          webrtcLogger.debug('Player connection confirmed by host');
           break;
         case 'error':
-          logger.error('Signaling error received:', message.payload);
+          mainLogger.error('Signaling error received:', {
+            message,
+          });
           break;
         default:
-          logger.warn('Unknown message type:', message.type);
+          webrtcLogger.debug('Unknown message type:', message.type);
       }
     },
     [handleOffer, handleIceCandidate],
@@ -270,10 +286,13 @@ export function useWebRTCPlayer({
         dataChannelRef.send(JSON.stringify(data));
         console.log('Sent to host:', data);
       } catch (err) {
-        logger.error('Failed to send to host:', err);
+        mainLogger.error('Failed to send to host:', {
+          error: err,
+          data,
+        });
       }
     } else {
-      logger.error('Data channel is not open');
+      webrtcLogger.warn('Data channel is not open');
     }
   }, []);
 
