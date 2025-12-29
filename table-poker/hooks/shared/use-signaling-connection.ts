@@ -3,6 +3,7 @@ import { useAtom } from 'jotai';
 import { SIGNALING_SERVER_URL } from '@/constants/signaling';
 import type { SignalingMessage } from '@/types/signaling';
 import { logger } from '@/utils/shared/logger';
+import { webrtcLogger } from '@/utils/shared/logger';
 import { signalingConnectionAtom } from '@/store/signaling-connection';
 import type { ConnectionState } from '@/store/signaling-connection';
 
@@ -49,7 +50,9 @@ export function useSignalingConnection({
           error: null,
         });
 
-        const url = `${SIGNALING_SERVER_URL}?playerId=${encodeURIComponent(finalPlayerId)}&gameId=${encodeURIComponent(finalGameId)}`;
+        const url = `${SIGNALING_SERVER_URL}?playerId=${encodeURIComponent(
+          finalPlayerId,
+        )}&gameId=${encodeURIComponent(finalGameId)}`;
         const ws = new WebSocket(url);
 
         ws.onopen = () => {
@@ -63,7 +66,7 @@ export function useSignalingConnection({
         ws.onmessage = (event) => {
           try {
             const message: SignalingMessage = JSON.parse(event.data);
-            logger.info('Received message:', message);
+            webrtcLogger.info('Received message:', message);
             messageHandlerRef?.(message);
           } catch (err) {
             logger.error('Failed to parse message:', err);
