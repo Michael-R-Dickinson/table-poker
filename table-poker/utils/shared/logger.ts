@@ -15,7 +15,7 @@ console.log = (...args: any[]) => {
 };
 
 // Disabled extensions configuration
-const disabledExtensions: string[] = [];
+const disabledExtensions: string[] = ['webrtc'];
 
 // Custom transport with formatted output
 const customTransport = (props: any) => {

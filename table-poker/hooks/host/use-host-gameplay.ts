@@ -35,16 +35,7 @@ export function useHostGameplay({
 
   // Broadcast game state to all players after any game state change
   useEffect(() => {
-    console.log('Game state change - preparing to broadcast', {
-      version: pokerGame.version,
-      gameStarted,
-      handInProgress: pokerGame.table?.isHandInProgress(),
-      communityCards: pokerGame.table?.isHandInProgress()
-        ? pokerGame.table?.communityCards()
-        : 'hand-not-in-progress',
-    });
-
-    if (!pokerGame.table || !pokerGame.table.isHandInProgress()) {
+    if (!pokerGame.table) {
       return;
     }
 
@@ -54,6 +45,57 @@ export function useHostGameplay({
     }
 
     previousVersionRef.current = pokerGame.version;
+
+    // Check if hand just ended (showdown completed or everyone folded)
+    if (!pokerGame.table.isHandInProgress()) {
+      const pots = pokerGame.table.pots();
+      const winners = pokerGame.table.winners();
+
+      logger.info('Hand ended', { pots, winners });
+
+      // Calculate winnings for each player
+      const playerWinnings = new Map<number, number>();
+
+      if (winners.length > 0) {
+        // Showdown occurred - match winners with pots
+        winners.forEach((potWinners, potIndex) => {
+          const pot = pots[potIndex];
+          const winnersCount = potWinners.length;
+          const amountPerWinner = Math.floor(pot.size / winnersCount);
+
+          potWinners.forEach(([seatIndex]) => {
+            const currentWinnings = playerWinnings.get(seatIndex) || 0;
+            playerWinnings.set(seatIndex, currentWinnings + amountPerWinner);
+          });
+        });
+      } else if (pots.length === 1 && pots[0].eligiblePlayers.length === 1) {
+        // Everyone folded - single winner
+        const winningSeat = pots[0].eligiblePlayers[0];
+        playerWinnings.set(winningSeat, pots[0].size);
+      }
+
+      // Convert to array format for broadcasting
+      const winningsArray = Array.from(playerWinnings.entries()).map(
+        ([seatIndex, amount]) => ({
+          seatIndex,
+          amount,
+        }),
+      );
+
+      logger.info('Broadcasting end-hand message', { winnings: winningsArray });
+
+      // Broadcast end-hand message to all players
+      broadcastToPlayers({
+        type: 'end-hand',
+        winners: winningsArray,
+      });
+
+      return;
+    }
+
+    if (!pokerGame.table.isHandInProgress()) {
+      return;
+    }
 
     logger.info('Broadcasting game state to all players', {
       version: pokerGame.version,
@@ -100,9 +142,6 @@ export function useHostGameplay({
           }, 500);
         }
       }
-    } else {
-      // Hand is complete, could auto-start next hand here if desired
-      logger.info('Hand complete');
     }
   }, [
     pokerGame.version,
@@ -112,6 +151,7 @@ export function useHostGameplay({
     sendToPlayer,
     connectedPlayers,
     gameControl,
+    broadcastToPlayers,
   ]);
 
   const startGame = useCallback(() => {

@@ -36,9 +36,10 @@ export default function PlayerInGameScreen() {
     },
   });
 
-  const { gameState, handleGameStateMessage, takeAction } = usePlayerGameplay({
-    sendToHost,
-  });
+  const { gameState, winningInfo, handleGameStateMessage, takeAction } =
+    usePlayerGameplay({
+      sendToHost,
+    });
 
   const handleLeaveGame = () => {
     disconnectSignaling();
@@ -141,7 +142,14 @@ export default function PlayerInGameScreen() {
             <ThemedView style={styles.myStatsBar}>
               <View style={styles.statBlock}>
                 <ThemedText style={styles.statLabel}>Stack</ThemedText>
-                <ThemedText style={styles.statValue}>{myPlayerInfo.stack}</ThemedText>
+                <View style={styles.stackContainer}>
+                  <ThemedText style={styles.statValue}>{myPlayerInfo.stack}</ThemedText>
+                  {winningInfo && (
+                    <ThemedText style={styles.winningAmount}>
+                      +{winningInfo.amount}
+                    </ThemedText>
+                  )}
+                </View>
               </View>
               <View style={styles.statBlock}>
                 <ThemedText style={styles.statLabel}>Current Bet</ThemedText>
@@ -170,7 +178,10 @@ export default function PlayerInGameScreen() {
             <View style={styles.holeCardsContainer}>
               {gameState.holeCards && gameState.holeCards.length > 0 ? (
                 gameState.holeCards.map((card, index) => (
-                  <View key={index} style={styles.card}>
+                  <View
+                    key={index}
+                    style={[styles.card, winningInfo && styles.cardWinner]}
+                  >
                     <ThemedText style={styles.cardText}>{formatCard(card)}</ThemedText>
                   </View>
                 ))
@@ -391,10 +402,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ddd',
   },
+  cardWinner: {
+    borderColor: '#4CAF50',
+    borderWidth: 3,
+  },
   cardText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
+  },
+  stackContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  winningAmount: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4CAF50',
   },
   emptyText: {
     textAlign: 'center',

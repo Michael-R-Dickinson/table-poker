@@ -9,16 +9,36 @@ interface UsePlayerGameplayProps {
 }
 
 export function usePlayerGameplay({ sendToHost }: UsePlayerGameplayProps) {
-  const [{ gameState }, setPlayerGame] = useAtom(playerGameAtom);
+  const [playerGame, setPlayerGame] = useAtom(playerGameAtom);
 
   const handleGameStateMessage = useCallback(
     (data: any) => {
+      logger.info('Received message from host:', data);
+
       if (data.type === 'game-state') {
-        // logger.info('Received game state update:', data.state);
-        setPlayerGame({ gameState: data.state });
+        setPlayerGame((prev) => ({
+          ...prev,
+          gameState: data.state,
+          winningInfo: null,
+        }));
+      } else if (data.type === 'end-hand') {
+        const myWinning = data.winners.find(
+          (w: { seatIndex: number; amount: number }) =>
+            w.seatIndex === playerGame.gameState?.mySeatIndex,
+        );
+
+        if (myWinning) {
+          logger.info('I won!', myWinning);
+          setPlayerGame((prev) => ({
+            ...prev,
+            winningInfo: myWinning,
+          }));
+        } else {
+          logger.info('I did not win this hand');
+        }
       }
     },
-    [setPlayerGame],
+    [setPlayerGame, playerGame.gameState?.mySeatIndex],
   );
 
   const takeAction = useCallback(
@@ -34,7 +54,8 @@ export function usePlayerGameplay({ sendToHost }: UsePlayerGameplayProps) {
   );
 
   return {
-    gameState,
+    gameState: playerGame.gameState,
+    winningInfo: playerGame.winningInfo,
     handleGameStateMessage,
     takeAction,
   };
