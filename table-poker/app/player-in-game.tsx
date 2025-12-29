@@ -12,13 +12,18 @@ export default function PlayerInGameScreen() {
   const params = useLocalSearchParams();
   const { gameCode, playerName } = params;
 
-  const { sendMessage } = useSignalingConnection({
+  const { sendMessage, disconnect: disconnectSignaling } = useSignalingConnection({
     onMessage: (message) => {
       handleSignalingMessage(message);
     },
   });
 
-  const { connectionState, handleSignalingMessage, sendToHost } = useWebRTCPlayer({
+  const {
+    connectionState,
+    handleSignalingMessage,
+    sendToHost,
+    disconnect: disconnectWebRTC,
+  } = useWebRTCPlayer({
     sendSignalingMessage: sendMessage,
     onConnected: () => {
       logger.info('Connected to host');
@@ -36,7 +41,9 @@ export default function PlayerInGameScreen() {
   });
 
   const handleLeaveGame = () => {
-    router.back();
+    disconnectSignaling();
+    disconnectWebRTC();
+    router.replace('/');
   };
 
   const formatCard = (card: any) => {
