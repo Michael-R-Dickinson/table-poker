@@ -4,6 +4,16 @@ import * as Device from 'expo-device';
 // Get device name
 const deviceName = Device.deviceName || Device.modelName || 'Unknown';
 
+// Suppress react-native-webrtc internal debug logs
+const originalLog = console.log;
+console.log = (...args: any[]) => {
+  // Filter out react-native-webrtc debug logs (rn-webrtc:*)
+  if (typeof args[0] === 'string' && args[0].includes('rn-webrtc:')) {
+    return;
+  }
+  originalLog.apply(console, args);
+};
+
 // Disabled extensions configuration
 const disabledExtensions: string[] = ['webrtc'];
 
