@@ -56,7 +56,19 @@ export function createPeerConnection({
     connectionState: 'connecting',
   };
 
+  // Timeout for initial data channel connection
+  // If data channel doesn't open within 30 seconds, trigger cleanup
+  const openTimeout = setTimeout(() => {
+    if (dataChannel.readyState !== 'open') {
+      webrtcLogger.warn(
+        `Data channel failed to open within timeout for player: ${playerId}`,
+      );
+      onDataChannelClose(playerId);
+    }
+  }, 5000);
+
   (dataChannel as any).addEventListener('open', () => {
+    clearTimeout(openTimeout);
     webrtcLogger.debug(`Data channel opened for player: ${playerId}`);
     peerInfo.connectionState = 'connected';
 
@@ -75,6 +87,7 @@ export function createPeerConnection({
   });
 
   (dataChannel as any).addEventListener('close', () => {
+    clearTimeout(openTimeout);
     webrtcLogger.debug(`Data channel closed for player: ${playerId}`);
     peerInfo.connectionState = 'disconnected';
 

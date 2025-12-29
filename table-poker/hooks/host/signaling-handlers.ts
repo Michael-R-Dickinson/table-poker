@@ -51,7 +51,19 @@ export function createSignalingHandlers(deps: SignalingHandlerDependencies) {
         });
       },
       onConnectionStateChange: (playerId, state) => {
-        // State monitoring handled in peer connection manager
+        // If connection definitively fails before data channel opens, cleanup early
+        if (state === 'failed' || state === 'closed') {
+          const peerInfo = peerConnectionsRef.current.get(playerId);
+          const channelState = peerInfo?.dataChannel?.readyState;
+
+          // Only cleanup if data channel never opened (not 'open', 'closing', or 'closed')
+          if (channelState !== 'open' && channelState !== 'closing') {
+            webrtcLogger.warn(
+              `Connection ${state} before data channel opened for ${playerId}, cleaning up`,
+            );
+            onPlayerDisconnected(playerId);
+          }
+        }
       },
       onDataChannelOpen: (playerId) => {
         onPlayerConnected(playerId);
