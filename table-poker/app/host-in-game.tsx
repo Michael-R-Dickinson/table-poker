@@ -212,7 +212,7 @@ export default function HostInGameScreen() {
           {handEndWinners.map((winner) => (
             <ThemedView key={winner.seatIndex} style={styles.winnerItem}>
               <ThemedText style={styles.winnerText}>
-                Seat {winner.seatIndex} won {winner.amount} chips
+                {winner.playerName} won {winner.amount} chips
               </ThemedText>
             </ThemedView>
           ))}

@@ -23,6 +23,7 @@ interface PlayerAction {
 
 interface WinnerInfo {
   seatIndex: number;
+  playerName: string;
   amount: number;
 }
 
@@ -136,6 +137,12 @@ export function useHostGameplay({
         playerWinnings.set(winningSeat, lastPots[0].size);
       }
 
+      // Create reverse map from seatIndex to playerId
+      const seatToPlayerMap = new Map<number, string>();
+      playerToSeatMap.forEach((seatIndex, playerId) => {
+        seatToPlayerMap.set(seatIndex, playerId);
+      });
+
       // Convert to array format for broadcasting
       const winningsArray = Array.from(playerWinnings.entries()).map(
         ([seatIndex, amount]) => ({
@@ -144,10 +151,19 @@ export function useHostGameplay({
         }),
       );
 
+      // Convert to array format with player names for host display
+      const winningsWithNames = Array.from(playerWinnings.entries()).map(
+        ([seatIndex, amount]) => ({
+          seatIndex,
+          playerName: seatToPlayerMap.get(seatIndex) || `Seat ${seatIndex}`,
+          amount,
+        }),
+      );
+
       logger.info('Broadcasting end-hand message', { winnings: winningsArray });
 
       // Store winner info for host display
-      setHandEndWinners(winningsArray);
+      setHandEndWinners(winningsWithNames);
 
       // Broadcast end-hand message to all players
       broadcastToPlayers({
