@@ -137,6 +137,34 @@ export default function PlayerInGameScreen() {
             </ThemedView>
           )}
 
+          {myPlayerInfo && (
+            <ThemedView style={styles.myStatsBar}>
+              <View style={styles.statBlock}>
+                <ThemedText style={styles.statLabel}>Stack</ThemedText>
+                <ThemedText style={styles.statValue}>{myPlayerInfo.stack}</ThemedText>
+              </View>
+              <View style={styles.statBlock}>
+                <ThemedText style={styles.statLabel}>Current Bet</ThemedText>
+                <ThemedText style={styles.statValue}>
+                  {myPlayerInfo.currentBet}
+                </ThemedText>
+              </View>
+              <View style={styles.statBlock}>
+                <ThemedText style={styles.statLabel}>Status</ThemedText>
+                <ThemedText
+                  style={[
+                    styles.statValue,
+                    styles.statusBadge,
+                    myPlayerInfo.status === 'folded' && styles.statusFolded,
+                    myPlayerInfo.status === 'active' && styles.statusActive,
+                  ]}
+                >
+                  {myPlayerInfo.status}
+                </ThemedText>
+              </View>
+            </ThemedView>
+          )}
+
           <ThemedView style={styles.section}>
             <ThemedText type="subtitle">Your Hole Cards</ThemedText>
             <View style={styles.holeCardsContainer}>
@@ -254,6 +282,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#000',
+  },
+  myStatsBar: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 20,
+  },
+  statBlock: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  statusBadge: {
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
+    textTransform: 'capitalize',
+  },
+  statusActive: {
+    backgroundColor: '#4CAF50',
+    color: '#fff',
+  },
+  statusFolded: {
+    backgroundColor: '#F44336',
+    color: '#fff',
   },
   statusContainer: {
     flex: 1,
