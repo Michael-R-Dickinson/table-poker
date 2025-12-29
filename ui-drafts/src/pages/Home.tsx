@@ -14,6 +14,11 @@ const Home = () => {
               Pulse - Personal Finance Tracker
             </a>
           </Link>
+          <Link href="/moon-poker-mobile">
+            <a className="text-blue-500 hover:underline">
+              Moon Poker Mobile
+            </a>
+          </Link>
         </div>
       </div>
     </div>
