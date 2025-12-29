@@ -21,6 +21,11 @@ interface PlayerAction {
   betSize?: number;
 }
 
+interface WinnerInfo {
+  seatIndex: number;
+  amount: number;
+}
+
 export function useHostGameplay({
   pokerGame,
   gameControl,
@@ -34,6 +39,8 @@ export function useHostGameplay({
   const [lastPots, setLastPots] = useState<{ size: number; eligiblePlayers: number[] }[]>(
     [],
   );
+  const [lastCommunityCards, setLastCommunityCards] = useState<any[]>([]);
+  const [handEndWinners, setHandEndWinners] = useState<WinnerInfo[] | null>(null);
   const previousVersionRef = useRef<number>(0);
 
   // Broadcast game state to all players after any game state change
@@ -53,6 +60,10 @@ export function useHostGameplay({
       // Hand in progress - store pots and broadcast game state
       const pots = pokerGame.table.pots();
       setLastPots(pots);
+
+      // Store community cards while hand is in progress
+      const communityCards = pokerGame.table.communityCards();
+      setLastCommunityCards(communityCards);
 
       logger.info('Broadcasting game state to all players', {
         version: pokerGame.version,
@@ -134,6 +145,9 @@ export function useHostGameplay({
       );
 
       logger.info('Broadcasting end-hand message', { winnings: winningsArray });
+
+      // Store winner info for host display
+      setHandEndWinners(winningsArray);
 
       // Broadcast end-hand message to all players
       broadcastToPlayers({
@@ -229,10 +243,19 @@ export function useHostGameplay({
     [pokerGame.table, gameStarted, playerToSeatMap, gameControl],
   );
 
+  const startNextHand = useCallback(() => {
+    logger.info('Starting next hand');
+    setHandEndWinners(null);
+    gameControl.startHand();
+  }, [gameControl]);
+
   return {
     startGame,
     handlePlayerAction,
     gameStarted,
     playerToSeatMap,
+    lastCommunityCards,
+    handEndWinners,
+    startNextHand,
   };
 }

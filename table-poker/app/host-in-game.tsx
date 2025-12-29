@@ -50,7 +50,14 @@ export default function HostInGameScreen() {
     },
   });
 
-  const { startGame, handlePlayerAction, gameStarted } = useHostGameplay({
+  const {
+    startGame,
+    handlePlayerAction,
+    gameStarted,
+    lastCommunityCards,
+    handEndWinners,
+    startNextHand,
+  } = useHostGameplay({
     pokerGame,
     gameControl,
     connectedPlayers,
@@ -120,10 +127,16 @@ export default function HostInGameScreen() {
   }, [pokerGame.version]);
 
   const communityCards = useMemo(() => {
-    if (!pokerGame.table || !pokerGame.table.isHandInProgress()) {
-      logger.debug('Short circuiting community cards - no hand in progress');
+    if (!pokerGame.table) {
       return [];
     }
+
+    if (!pokerGame.table.isHandInProgress()) {
+      // Hand ended - show last community cards
+      logger.debug('Short circuiting community cards - using last community cards');
+      return lastCommunityCards;
+    }
+
     const cards = pokerGame.table.communityCards();
     logger.debug('Computing community cards from table', {
       version: pokerGame.version,
@@ -131,7 +144,7 @@ export default function HostInGameScreen() {
       cards: cards,
     });
     return cards;
-  }, [pokerGame]);
+  }, [pokerGame, lastCommunityCards]);
   logger.debug('Rendering HostInGameScreen', {
     communityCards,
     version: pokerGame.version,
@@ -192,6 +205,26 @@ export default function HostInGameScreen() {
           )}
         </View>
       </ThemedView>
+
+      {handEndWinners && handEndWinners.length > 0 && (
+        <ThemedView style={styles.winnerSection}>
+          <ThemedText type="subtitle">Hand Results</ThemedText>
+          {handEndWinners.map((winner) => (
+            <ThemedView key={winner.seatIndex} style={styles.winnerItem}>
+              <ThemedText style={styles.winnerText}>
+                Seat {winner.seatIndex} won {winner.amount} chips
+              </ThemedText>
+            </ThemedView>
+          ))}
+          <View style={styles.continueButtonContainer}>
+            <Button
+              title="Continue to Next Hand"
+              onPress={startNextHand}
+              color="#4CAF50"
+            />
+          </View>
+        </ThemedView>
+      )}
 
       <ThemedView style={styles.section}>
         <ThemedText type="subtitle">Players ({connectedPlayers.length})</ThemedText>
@@ -301,5 +334,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#000',
+  },
+  winnerSection: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#e8f5e9',
+    borderRadius: 10,
+    gap: 10,
+  },
+  winnerItem: {
+    padding: 10,
+    backgroundColor: '#c8e6c9',
+    borderRadius: 8,
+  },
+  winnerText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  continueButtonContainer: {
+    marginTop: 10,
   },
 });
