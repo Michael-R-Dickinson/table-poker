@@ -8,7 +8,6 @@ export function extractPlayerGameState(
   const holeCards = table.holeCards();
   const seats = table.seats();
   const handPlayers = table.handPlayers();
-  const pots = table.pots();
 
   // Get player-specific hole cards
   const playerHoleCards = holeCards[playerSeatIndex] || null;
@@ -53,20 +52,11 @@ export function extractPlayerGameState(
         if (!player) return null;
 
         // Determine player status
+        // Note: handPlayers() returns null for folded players, so if we reach
+        // this point, the player is either active or all-in
         let status: PlayerStatus = 'active';
-
-        // Check if player is all-in (stack is 0)
         if (player.stack === 0) {
           status = 'all-in';
-        } else {
-          // Check if player is folded by looking at eligible players in pots
-          const isEligible = pots.some(
-            (pot: { size: number; eligiblePlayers: number[] }) =>
-              pot.eligiblePlayers.includes(seatIndex),
-          );
-          if (!isEligible && table.isHandInProgress()) {
-            status = 'folded';
-          }
         }
 
         return {
@@ -74,7 +64,7 @@ export function extractPlayerGameState(
           stack: player.stack,
           currentBet: player.betSize,
           status,
-        };
+        } as PlayerInfo;
       },
     )
     .filter((p): p is PlayerInfo => p !== null);
