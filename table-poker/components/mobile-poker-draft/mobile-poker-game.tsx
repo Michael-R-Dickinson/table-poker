@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import type { Action } from '@/types/game-state';
 import { Card } from './card';
 import { OpponentDisplay } from './opponent-display';
 import { ActionButtons } from './action-buttons';
@@ -26,9 +27,10 @@ interface MobilePokerGameProps {
   playerChips: number;
   playerCurrentBet: number;
   isPlayerTurn: boolean;
-  onFold: () => void;
-  onCall: () => void;
-  onRaise: (amount: number) => void;
+  availableActions: Action[];
+  onAction: (action: Action, amount?: number) => void;
+  chipRange: { min: number; max: number } | null;
+  amountToCall: number | null;
 }
 
 export function MobilePokerGame({
@@ -38,9 +40,10 @@ export function MobilePokerGame({
   playerChips,
   playerCurrentBet,
   isPlayerTurn,
-  onFold,
-  onCall,
-  onRaise,
+  availableActions,
+  onAction,
+  chipRange,
+  amountToCall,
 }: MobilePokerGameProps) {
   return (
     <View style={styles.container}>
@@ -81,10 +84,10 @@ export function MobilePokerGame({
           {/* Action buttons for player decisions */}
           <View style={styles.actionButtonsContainer}>
             <ActionButtons
-              onFold={onFold}
-              onCall={onCall}
-              onRaise={onRaise}
-              isPlayerTurn={isPlayerTurn}
+              availableActions={isPlayerTurn ? availableActions : []}
+              onAction={onAction}
+              chipRange={chipRange}
+              amountToCall={amountToCall}
             />
           </View>
 

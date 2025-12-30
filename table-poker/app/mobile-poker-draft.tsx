@@ -49,9 +49,9 @@ export default function MobilePokerDraftScreen() {
     { rank: 'Q', suit: 'spades' as const },
   ];
 
-  const handleFold = () => console.log('Fold');
-  const handleCall = () => console.log('Call');
-  const handleRaise = (amount: number) => console.log('Raise', amount);
+  const handleAction = (action: string, amount?: number) => {
+    console.log('Action:', action, amount);
+  };
 
   return (
     <MobilePokerGame
@@ -61,9 +61,10 @@ export default function MobilePokerDraftScreen() {
       playerChips={180}
       playerCurrentBet={0}
       isPlayerTurn={true}
-      onFold={handleFold}
-      onCall={handleCall}
-      onRaise={handleRaise}
+      availableActions={['fold', 'call', 'raise']}
+      onAction={handleAction}
+      chipRange={{ min: 20, max: 180 }}
+      amountToCall={20}
     />
   );
 }
