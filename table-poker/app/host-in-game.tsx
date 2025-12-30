@@ -1,11 +1,6 @@
-import {
-  StyleSheet,
-  View,
-  Button,
-  ScrollView,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
+import { StyleSheet, View, Button, Alert, TouchableOpacity } from 'react-native';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { useFocusEffect } from '@react-navigation/native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
@@ -15,14 +10,16 @@ import { logger } from '@/utils/shared/logger';
 import { useAtom } from 'jotai';
 import { pokerGameAtom } from '@/store/poker-game';
 import { Table } from 'poker-ts';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { createGameControl } from '@/utils/host/game-control';
 import { useHostGameplay } from '@/hooks/host/use-host-gameplay';
 import { Ionicons } from '@expo/vector-icons';
+import { HostCard } from '@/components/host-card';
+import { HostCardBack } from '@/components/host-card-back';
 
 export default function HostInGameScreen() {
   const params = useLocalSearchParams();
-  const { gameCode, smallBlind, bigBlind, buyIn } = params;
+  const { smallBlind, bigBlind, buyIn } = params;
 
   const [pokerGame, setPokerGame] = useAtom(pokerGameAtom);
 
@@ -74,6 +71,17 @@ export default function HostInGameScreen() {
     buyIn: Number(buyIn),
   });
 
+  // Lock to landscape orientation
+  useFocusEffect(
+    useCallback(() => {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+
+      return () => {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
+      };
+    }, []),
+  );
+
   useEffect(() => {
     // Initialize poker table when component mounts
     const table = new Table({
@@ -91,7 +99,7 @@ export default function HostInGameScreen() {
       bigBlind,
       buyIn,
     });
-  }, [smallBlind, bigBlind, buyIn]);
+  }, [smallBlind, bigBlind, buyIn, setPokerGame]);
 
   // Auto-start game when table is ready and we have players
   useEffect(() => {
@@ -128,31 +136,6 @@ export default function HostInGameScreen() {
     );
   };
 
-  const handleLogGameState = () => {
-    if (!pokerGame.table) {
-      logger.warn('No poker table initialized');
-      return;
-    }
-
-    const table = pokerGame.table;
-
-    const bettingRoundInProgress =
-      table.isHandInProgress() && table.isBettingRoundInProgress();
-
-    logger.info('Table state:', {
-      // isHandInProgress: table.isHandInProgress(),
-      // isBettingRoundInProgress: bettingRoundInProgress,
-      // seats: table.seats(),
-      communityCards: table.communityCards(),
-      version: pokerGame.version,
-    });
-  };
-
-  useEffect(() => {
-    logger.debug('CHANGE IN VERSION DETECTED', { version: pokerGame.version });
-    // consider just making it pokerGame?
-  }, [pokerGame.version]);
-
   const communityCards = useMemo(() => {
     if (!pokerGame.table) {
       return [];
@@ -172,29 +155,68 @@ export default function HostInGameScreen() {
     });
     return cards;
   }, [pokerGame, lastCommunityCards]);
+
+  // Calculate pot size
+  const potSize = useMemo(() => {
+    if (!pokerGame.table || !pokerGame.table.isHandInProgress()) {
+      return 0;
+    }
+    const pots = pokerGame.table.pots();
+    return pots.reduce((total, pot) => total + pot.size, 0);
+  }, [pokerGame]);
+
+  // Calculate current bet (max bet among all seats)
+  const currentBet = useMemo(() => {
+    if (
+      !pokerGame.table ||
+      !pokerGame.table.isHandInProgress() ||
+      !pokerGame.table.isBettingRoundInProgress()
+    ) {
+      return 0;
+    }
+    const seats = pokerGame.table.seats();
+    return Math.max(...seats.map((s) => s?.betSize || 0));
+  }, [pokerGame]);
+
+  // Map poker-ts card to HostCard format
+  const mapCard = (card: any) => {
+    if (!card) return null;
+
+    const suitMap: { [key: string]: 'club' | 'diamond' | 'heart' | 'spade' } = {
+      clubs: 'club',
+      diamonds: 'diamond',
+      hearts: 'heart',
+      spades: 'spade',
+    };
+
+    const valueMap: { [key: string]: string } = {
+      '10': '10',
+    };
+
+    const suit = suitMap[card.suit];
+    const value = (valueMap[card.rank] || card.rank) as any;
+
+    return { suit, value };
+  };
+
   logger.debug('Rendering HostInGameScreen', {
     communityCards,
     version: pokerGame.version,
   });
 
-  const formatCard = (card: any) => {
-    if (!card) return '';
-    const rankMap: { [key: string]: string } = {
-      '10': 'T',
-    };
-    const rank = rankMap[card.rank] || card.rank;
-    const suitMap: { [key: string]: string } = {
-      clubs: 'c',
-      diamonds: 'd',
-      hearts: 'h',
-      spades: 's',
-    };
-    const suit = suitMap[card.suit] || card.suit[0];
-    return `${rank}${suit}`;
-  };
+  // Prepare community cards for display (max 5, fill with card backs)
+  const displayCards = useMemo(() => {
+    const mapped = communityCards.map(mapCard).filter(Boolean);
+    const remaining = 5 - mapped.length;
+    return [...mapped, ...Array(remaining).fill(null)];
+  }, [communityCards]);
+
+  // Placeholder action history (TODO: implement real action tracking)
+  const mostRecentAction = 'Waiting...';
+  const previousActions: string[] = [];
 
   return (
-    <ScrollView style={styles.container}>
+    <View style={styles.container}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={handleBackPress}
@@ -203,90 +225,176 @@ export default function HostInGameScreen() {
         <Ionicons name="arrow-back" size={28} color="#fff" />
       </TouchableOpacity>
 
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">Game In Progress</ThemedText>
-      </ThemedView>
+      <View style={styles.contentContainer}>
+        {/* Top info row (rotated 180deg) */}
+        <View style={styles.topInfoRow}>
+          <View style={styles.infoCard}>
+            <View style={styles.infoContent}>
+              <ThemedText
+                style={styles.labelText}
+                lightColor="#fcd34d"
+                darkColor="#fcd34d"
+              >
+                POT
+              </ThemedText>
+              <ThemedText style={styles.valueText}>
+                ${potSize.toLocaleString()}
+              </ThemedText>
+            </View>
+          </View>
 
-      <ThemedView style={styles.gameInfoContainer}>
-        <ThemedView style={styles.infoRow}>
-          <ThemedText style={styles.infoLabel}>Game Code:</ThemedText>
-          <ThemedText style={styles.infoValue}>{gameCode}</ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.infoRow}>
-          <ThemedText style={styles.infoLabel}>Small Blind:</ThemedText>
-          <ThemedText style={styles.infoValue}>{smallBlind}</ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.infoRow}>
-          <ThemedText style={styles.infoLabel}>Big Blind:</ThemedText>
-          <ThemedText style={styles.infoValue}>{bigBlind}</ThemedText>
-        </ThemedView>
-        <ThemedView style={styles.infoRow}>
-          <ThemedText style={styles.infoLabel}>Buy-In:</ThemedText>
-          <ThemedText style={styles.infoValue}>{buyIn}</ThemedText>
-        </ThemedView>
-      </ThemedView>
-
-      <ThemedView style={styles.section}>
-        <ThemedText type="subtitle">Community Cards</ThemedText>
-        <View style={styles.communityCardsContainer}>
-          {communityCards.length === 0 ? (
-            <ThemedText style={styles.emptyText}>No community cards yet</ThemedText>
-          ) : (
-            communityCards.map((card, index) => (
-              <View key={index} style={styles.card}>
-                <ThemedText style={styles.cardText}>{formatCard(card)}</ThemedText>
+          <View style={styles.actionCardCenter}>
+            <View style={styles.actionCardContent}>
+              <ThemedText
+                style={styles.actionLabelText}
+                lightColor="#93c5fd"
+                darkColor="#93c5fd"
+              >
+                ACTION
+              </ThemedText>
+              <View style={styles.actionHistory}>
+                <ThemedText style={styles.recentActionText}>
+                  {mostRecentAction}
+                </ThemedText>
+                {previousActions.map((action, index) => {
+                  const opacity = 0.8 - index * 0.15;
+                  const fontSize = index === 0 ? 18 : index === 1 ? 16 : 14;
+                  return (
+                    <ThemedText
+                      key={index}
+                      style={[styles.previousActionText, { opacity, fontSize }]}
+                    >
+                      {action}
+                    </ThemedText>
+                  );
+                })}
               </View>
-            ))
+            </View>
+          </View>
+
+          <View style={styles.infoCard}>
+            <View style={styles.infoContent}>
+              <ThemedText
+                style={styles.labelText}
+                lightColor="#6ee7b7"
+                darkColor="#6ee7b7"
+              >
+                TO CALL
+              </ThemedText>
+              <ThemedText style={styles.valueText}>
+                ${currentBet.toLocaleString()}
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+
+        {/* Community cards */}
+        <View style={styles.communityCardsContainer}>
+          {displayCards.map((card, index) =>
+            card ? (
+              <HostCard key={index} suit={card.suit} value={card.value} />
+            ) : (
+              <HostCardBack key={index} />
+            ),
           )}
         </View>
-      </ThemedView>
 
-      {handEndWinners && handEndWinners.length > 0 && (
-        <ThemedView style={styles.winnerSection}>
-          <ThemedText type="subtitle">Hand Results</ThemedText>
-          {handEndWinners.map((winner) => (
-            <ThemedView key={winner.seatIndex} style={styles.winnerItem}>
-              <ThemedText style={styles.winnerText}>
-                {winner.playerName} won {winner.amount} chips
+        {/* Bottom info row */}
+        <View style={styles.bottomInfoRow}>
+          <View style={styles.infoCard}>
+            <View style={styles.infoContent}>
+              <ThemedText
+                style={styles.labelText}
+                lightColor="#fcd34d"
+                darkColor="#fcd34d"
+              >
+                POT
               </ThemedText>
-            </ThemedView>
-          ))}
-          <View style={styles.continueButtonContainer}>
-            <Button
-              title="Continue to Next Hand"
-              onPress={startNextHand}
-              color="#4CAF50"
-            />
+              <ThemedText style={styles.valueText}>
+                ${potSize.toLocaleString()}
+              </ThemedText>
+            </View>
           </View>
-        </ThemedView>
-      )}
 
-      <ThemedView style={styles.section}>
-        <ThemedText type="subtitle">Players ({connectedPlayers.length})</ThemedText>
-        {connectedPlayers.length === 0 ? (
-          <ThemedText style={styles.emptyText}>No players connected</ThemedText>
-        ) : (
-          <View>
-            {connectedPlayers.map((item) => (
-              <ThemedView key={item} style={styles.playerItem}>
-                <View style={styles.playerDot} />
-                <ThemedText>{item}</ThemedText>
+          <View style={styles.actionCardCenter}>
+            <View style={styles.actionCardContent}>
+              <ThemedText
+                style={styles.actionLabelText}
+                lightColor="#93c5fd"
+                darkColor="#93c5fd"
+              >
+                ACTION
+              </ThemedText>
+              <View style={styles.actionHistory}>
+                <ThemedText style={styles.recentActionText}>
+                  {mostRecentAction}
+                </ThemedText>
+                {previousActions.map((action, index) => {
+                  const opacity = 0.8 - index * 0.15;
+                  const fontSize = index === 0 ? 18 : index === 1 ? 16 : 14;
+                  return (
+                    <ThemedText
+                      key={index}
+                      style={[styles.previousActionText, { opacity, fontSize }]}
+                    >
+                      {action}
+                    </ThemedText>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.infoCard}>
+            <View style={styles.infoContent}>
+              <ThemedText
+                style={styles.labelText}
+                lightColor="#6ee7b7"
+                darkColor="#6ee7b7"
+              >
+                TO CALL
+              </ThemedText>
+              <ThemedText style={styles.valueText}>
+                ${currentBet.toLocaleString()}
+              </ThemedText>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* Winner overlay */}
+      {handEndWinners && handEndWinners.length > 0 && (
+        <View style={styles.winnerOverlay}>
+          <ThemedView style={styles.winnerSection}>
+            <ThemedText type="subtitle">Hand Results</ThemedText>
+            {handEndWinners.map((winner) => (
+              <ThemedView key={winner.seatIndex} style={styles.winnerItem}>
+                <ThemedText style={styles.winnerText}>
+                  {winner.playerName} won {winner.amount} chips
+                </ThemedText>
               </ThemedView>
             ))}
-          </View>
-        )}
-      </ThemedView>
-
-      <ThemedView style={styles.section}>
-        <Button title="Log Game State" onPress={handleLogGameState} color="#2196F3" />
-      </ThemedView>
-    </ScrollView>
+            <View style={styles.continueButtonContainer}>
+              <Button
+                title="Continue to Next Hand"
+                onPress={startNextHand}
+                color="#4CAF50"
+              />
+            </View>
+          </ThemedView>
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    flex: 1,
+    backgroundColor: '#0C0D12',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
   },
   backButton: {
     position: 'absolute',
@@ -295,102 +403,117 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 8,
     borderRadius: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  header: {
-    marginBottom: 20,
-    marginTop: 20,
-  },
-  gameInfoContainer: {
-    padding: 15,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-    gap: 10,
-    marginBottom: 20,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  infoLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  infoValue: {
-    fontSize: 16,
-  },
-  section: {
-    marginBottom: 20,
-    gap: 10,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#999',
-    fontStyle: 'italic',
-    marginTop: 10,
-  },
-  playerItem: {
-    flexDirection: 'row',
+  contentContainer: {
     alignItems: 'center',
-    gap: 10,
-    padding: 12,
-    backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-    marginVertical: 4,
+    gap: 24,
   },
-  playerDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#4CAF50',
-  },
-  buttonRow: {
+  topInfoRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 5,
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 16,
+    maxWidth: 768,
+    width: '100%',
+    transform: [{ rotate: '180deg' }],
   },
-  button: {
+  bottomInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 16,
+    maxWidth: 768,
+    width: '100%',
+  },
+  infoCard: {
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  infoContent: {
+    alignItems: 'center',
+  },
+  labelText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  },
+  valueText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  actionCardCenter: {
     flex: 1,
+    paddingTop: 16,
+  },
+  actionCardContent: {
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    paddingHorizontal: 24,
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
+  actionLabelText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  actionHistory: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  recentActionText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textAlign: 'center',
+  },
+  previousActionText: {
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textAlign: 'center',
   },
   communityCardsContainer: {
     flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginTop: 10,
+    gap: 8,
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
-    minWidth: 60,
+  winnerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  cardText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+    justifyContent: 'center',
+    zIndex: 5,
   },
   winnerSection: {
-    marginBottom: 20,
-    padding: 15,
+    padding: 20,
     backgroundColor: '#e8f5e9',
-    borderRadius: 10,
-    gap: 10,
+    borderRadius: 16,
+    gap: 12,
+    maxWidth: 400,
+    width: '90%',
   },
   winnerItem: {
-    padding: 10,
+    padding: 12,
     backgroundColor: '#c8e6c9',
     borderRadius: 8,
   },
   winnerText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     textAlign: 'center',
+    color: '#1b5e20',
   },
   continueButtonContainer: {
-    marginTop: 10,
+    marginTop: 8,
   },
 });
