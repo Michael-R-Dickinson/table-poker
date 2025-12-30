@@ -1,6 +1,13 @@
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { Shadow } from 'react-native-shadow-2';
+import {
+  Canvas,
+  Rect,
+  RadialGradient as SkiaRadialGradient,
+  vec,
+} from '@shopify/react-native-skia';
 import { Card } from './card';
 import { OpponentDisplay } from './opponent-display';
 import { ActionButtons } from './action-buttons';
@@ -74,48 +81,82 @@ export function MobilePokerGame({
         <Text style={styles.potAmount}>{bet}</Text>
       </View>
 
-      <View
-        style={[
-          styles.tableEdge,
-          {
-            top: screenHeight * 0.5,
-            width: screenWidth * 2.8,
-            height: screenHeight * 0.7,
-            shadowColor: 'rgba(138, 130, 255, 0.3)',
-            shadowOffset: { width: 0, height: -1 },
-            shadowOpacity: 1,
-            shadowRadius: 1,
-            elevation: 5,
-          },
-        ]}
+      {/* Two-layer outer purple glow shadows */}
+      <Shadow
+        distance={50}
+        offset={[0, -25]}
+        startColor="rgba(90, 60, 255, 0.15)"
+        endColor="transparent"
+        containerStyle={{
+          position: 'absolute',
+          top: screenHeight * 0.5,
+          left: '50%',
+          marginLeft: -(screenWidth * 2.8) / 2,
+        }}
       >
-        {/* Inner playing surface - creates the rail gap */}
-        <View
-          style={[
-            styles.tablePlayingSurface,
-            {
-              marginTop: railSize,
-              marginLeft: railSize,
-              marginRight: railSize,
-              borderTopLeftRadius: screenWidth * 1.4 - railSize,
-              borderTopRightRadius: screenWidth * 1.4 - railSize,
-            },
-          ]}
+        <Shadow
+          distance={1}
+          offset={[0, -1]}
+          startColor="rgba(138, 130, 255, 0.3)"
+          endColor="transparent"
         >
-          {/* Subtle highlight line at top of playing surface */}
-          <View
+          {/* Table edge with gradient background */}
+          <LinearGradient
+            colors={['#161722', '#101016']}
+            locations={[0, 0.1]}
             style={[
-              styles.tableInnerHighlight,
+              styles.tableEdge,
               {
-                borderTopLeftRadius: screenWidth * 1.4 - railSize,
-                borderTopRightRadius: screenWidth * 1.4 - railSize,
+                width: screenWidth * 2.8,
+                height: screenHeight * 0.7,
+                borderTopLeftRadius: screenWidth * 1.4,
+                borderTopRightRadius: screenWidth * 1.4,
               },
             ]}
-          />
-        </View>
-      </View>
+          >
+            {/* Inner playing surface - creates the rail gap */}
+            <View
+              style={[
+                styles.tablePlayingSurface,
+                {
+                  marginTop: railSize,
+                  marginLeft: railSize,
+                  marginRight: railSize,
+                  borderTopLeftRadius: screenWidth * 1.4 - railSize,
+                  borderTopRightRadius: screenWidth * 1.4 - railSize,
+                },
+              ]}
+            >
+              {/* Subtle highlight line at top of playing surface */}
+              <View
+                style={[
+                  styles.tableInnerHighlight,
+                  {
+                    borderTopLeftRadius: screenWidth * 1.4 - railSize,
+                    borderTopRightRadius: screenWidth * 1.4 - railSize,
+                  },
+                ]}
+              />
+            </View>
+          </LinearGradient>
+        </Shadow>
+      </Shadow>
 
-      <View style={styles.purpleGlow} />
+      {/* Purple glow radial gradient */}
+      <Canvas style={styles.purpleGlow} pointerEvents="none">
+        <Rect x={0} y={0} width={600} height={screenHeight * 1.5}>
+          <SkiaRadialGradient
+            c={vec(300, screenHeight * 0.33)}
+            r={600}
+            colors={[
+              'rgba(138, 130, 255, 0.25)',
+              'rgba(90, 60, 255, 0.15)',
+              'transparent',
+            ]}
+            positions={[0, 0.3, 0.7]}
+          />
+        </Rect>
+      </Canvas>
 
       <View style={styles.playerSection}>
         <LinearGradient
@@ -229,12 +270,6 @@ const styles = StyleSheet.create({
     letterSpacing: -2,
   },
   tableEdge: {
-    position: 'absolute',
-    left: '50%',
-    marginLeft: -(screenWidth * 2.8) / 2,
-    borderTopLeftRadius: screenWidth * 1.4,
-    borderTopRightRadius: screenWidth * 1.4,
-    backgroundColor: '#161722',
     overflow: 'hidden',
   },
   tablePlayingSurface: {
@@ -258,7 +293,6 @@ const styles = StyleSheet.create({
     width: 600,
     height: screenHeight * 1.5,
     opacity: 0.3,
-    backgroundColor: 'transparent',
   },
   playerSection: {
     position: 'absolute',
