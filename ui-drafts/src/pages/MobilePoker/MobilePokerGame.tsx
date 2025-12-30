@@ -1,45 +1,54 @@
-import { Card } from "./Card";
-import { OpponentDisplay } from "./OpponentDisplay";
-import { ActionButtons } from "./ActionButtons";
+import { Card } from "./Card"
+import { OpponentDisplay } from "./OpponentDisplay"
+import { ActionButtons } from "./ActionButtons"
 
 interface Player {
-  id: string;
-  name: string;
-  chips: number;
-  currentBet: number;
-  status: "active" | "folded" | "called" | "raised" | "allin";
-  avatar: string;
+  id: string
+  name: string
+  chips: number
+  currentBet: number
+  status: "active" | "folded" | "called" | "raised" | "allin"
+  avatar: string
 }
 
 interface MobilePokerGameProps {
-  opponents: Player[];
-  pot: number;
-  playerCards: Array<{ rank: string; suit: string }>;
-  playerChips: number;
-  playerCurrentBet: number;
-  isPlayerTurn: boolean;
-  onFold: () => void;
-  onCheck: () => void;
-  onCall: () => void;
-  onRaise: (amount: number) => void;
+  opponents: Player[]
+  pot: number
+  playerCards: Array<{
+    rank: string
+    suit: "hearts" | "diamonds" | "clubs" | "spades"
+  }>
+  playerChips: number
+  playerCurrentBet: number
+  isPlayerTurn: boolean
+  onFold: () => void
+  onCall: () => void
+  onRaise: (amount: number) => void
 }
 
 export function MobilePokerGame({
   opponents,
-  pot,
+  pot: bet,
   playerCards,
   playerChips,
   playerCurrentBet,
   isPlayerTurn,
   onFold,
-  onCheck,
   onCall,
   onRaise,
 }: MobilePokerGameProps) {
+  const railSize = 22
+
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-[#0a0e1a] text-white">
+    <div
+      className="relative h-screen w-full overflow-hidden bg-[#050508] text-white"
+      style={{
+        background:
+          "radial-gradient(circle at 50% 0%, #0e0f16 0%, #050508 60%)",
+      }}
+    >
       {/* Opponents section */}
-      <div className="absolute top-0 left-0 right-0 px-4 pt-6 pb-4 bg-gradient-to-b from-[#0a0e1a] to-transparent z-10">
+      <div className="absolute top-0 left-0 right-0 px-4 pt-6 pb-4 bg-gradient-to-b from-[#0e0f16] to-transparent z-10">
         <div className="flex justify-around items-start gap-2">
           {opponents.map((opponent) => (
             <OpponentDisplay key={opponent.id} player={opponent} />
@@ -48,7 +57,7 @@ export function MobilePokerGame({
       </div>
 
       {/* Pot display */}
-      <div className="absolute top-24 left-0 right-0 flex flex-col items-center z-10">
+      <div className="absolute top-40 left-0 right-0 flex flex-col items-center z-10">
         <div className="flex items-center gap-2 mb-2">
           <svg
             className="w-5 h-5 text-gray-400"
@@ -63,47 +72,49 @@ export function MobilePokerGame({
             />
           </svg>
           <span className="text-sm text-gray-400 uppercase tracking-wide">
-            Pot
+            BET
           </span>
         </div>
-        <div className="text-7xl font-bold tracking-tight">{pot}</div>
+        <div className="text-7xl font-bold tracking-tight">{bet}</div>
       </div>
 
-      {/* Purple circular table */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div
-          className="relative w-[140vw] h-[140vw] max-w-[700px] max-h-[700px] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle at center, rgba(88, 70, 150, 0.4) 0%, rgba(88, 70, 150, 0.15) 40%, transparent 70%)",
-          }}
-        >
-          <div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle at 30% 30%, rgba(120, 90, 200, 0.3) 0%, transparent 50%)",
-            }}
-          />
-        </div>
-      </div>
+      {/* Poker table edge curve */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+        style={{
+          top: "50%",
+          width: "280%",
+          height: "70vh",
+          borderRadius: "50% 50% 0 0",
+          background: "linear-gradient(180deg, #161722 0%, #101016 10%)",
+          boxShadow: `
+            0 -1px 1px rgba(138, 130, 255, 0.3),
+            0 -25px 50px -10px rgba(90, 60, 255, 0.15),
+            inset 0 ${railSize}px 0 #0f1016,
+            inset 0 ${railSize + 1}px 0 rgba(255, 255, 255, 0.04)
+          `,
+        }}
+      />
+
+      {/* Purple glow emanating from center of curve */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 pointer-events-none"
+        style={{
+          top: "0",
+          width: "600px",
+          height: "150%",
+          opacity: "0.3",
+          background:
+            "radial-gradient(ellipse at center 33%, rgba(138, 130, 255, 0.25) 0%, rgba(90, 60, 255, 0.15) 30%, transparent 70%)",
+        }}
+      />
 
       {/* Player section */}
-      <div className="absolute bottom-0 left-0 right-0 pb-8 px-6 bg-gradient-to-t from-[#0a0e1a] via-[#0a0e1a]/90 to-transparent z-20">
-        {/* Player status badge */}
-        {isPlayerTurn && (
-          <div className="flex justify-center mb-4">
-            <div className="px-6 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black rounded-full font-semibold text-lg shadow-lg shadow-yellow-500/50">
-              Your Turn! 0:34
-            </div>
-          </div>
-        )}
-
+      <div className="absolute bottom-0 left-0 right-0 pb-8 px-6 bg-gradient-to-t from-[#050508] via-[#050508]/90 to-transparent z-20">
         {/* Action buttons */}
         <div className="mb-6">
           <ActionButtons
             onFold={onFold}
-            onCheck={onCheck}
             onCall={onCall}
             onRaise={onRaise}
             isPlayerTurn={isPlayerTurn}
@@ -114,11 +125,7 @@ export function MobilePokerGame({
         {playerCurrentBet > 0 && (
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full">
-              <svg
-                className="w-4 h-4"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <circle cx="10" cy="10" r="8" />
               </svg>
               <span className="font-semibold">{playerCurrentBet}</span>
@@ -127,15 +134,33 @@ export function MobilePokerGame({
         )}
 
         {/* Player cards */}
-        <div className="flex justify-center gap-4 mb-6">
-          {playerCards.map((card, index) => (
-            <Card key={index} rank={card.rank} suit={card.suit} size="large" />
-          ))}
+        <div className="relative flex justify-center mb-6 h-32">
+          {playerCards.map((card, index) => {
+            const totalCards = playerCards.length
+            const middleIndex = (totalCards - 1) / 2
+            const offsetFromMiddle = index - middleIndex
+            const rotation = offsetFromMiddle * 10
+            const translateX = offsetFromMiddle * 30
+
+            return (
+              <div
+                key={index}
+                className="absolute"
+                style={{
+                  transform: `translateX(${translateX}px) rotate(${rotation}deg)`,
+                  transformOrigin: "center bottom",
+                  zIndex: index,
+                }}
+              >
+                <Card rank={card.rank} suit={card.suit} size="medium" />
+              </div>
+            )
+          })}
         </div>
 
         {/* Player bank display */}
-        <div className="flex justify-end items-center gap-3">
-          <div className="text-right">
+        <div className="flex justify-center items-center gap-3">
+          <div className="text-center">
             <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
               Your Bank
             </div>
@@ -144,5 +169,5 @@ export function MobilePokerGame({
         </div>
       </div>
     </div>
-  );
+  )
 }

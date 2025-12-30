@@ -2,8 +2,9 @@ import { Route, Switch } from "wouter"
 import Design1 from "./pages/Design1/Design1"
 import Home from "./pages/Home"
 import Pulse from "./pages/Pulse"
-import MoonPokerMobile from "./pages/MoonPokerMobile/MoonPokerMobile"
 import NotFoundPage from "./pages/NotFoundPage"
+import MobilePokerPage from "./pages/MobilePoker"
+import PlayingCards from "./pages/PlayingCards/PlayingCards"
 
 function App() {
   return (
@@ -17,8 +18,11 @@ function App() {
       <Route path="/pulse/:rest*">
         <Pulse />
       </Route>
-      <Route path="/moon-poker-mobile">
-        <MoonPokerMobile />
+      <Route path="/mobile-poker">
+        <MobilePokerPage />
+      </Route>
+      <Route path="/playing-cards">
+        <PlayingCards />
       </Route>
       <NotFoundPage />
     </Switch>

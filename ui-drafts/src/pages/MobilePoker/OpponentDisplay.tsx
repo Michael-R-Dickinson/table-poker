@@ -10,85 +10,50 @@ interface OpponentDisplayProps {
 }
 
 export function OpponentDisplay({ player }: OpponentDisplayProps) {
-  const statusColors = {
-    folded: "bg-red-500/90 text-white",
-    called: "bg-blue-500/90 text-white",
-    raised: "bg-green-500/90 text-white",
-    allin: "bg-purple-500/90 text-white",
-    active: "bg-transparent",
-  };
-
-  const statusLabels = {
-    folded: "Folded",
-    called: "Called",
-    raised: "Raised",
-    allin: "All In",
-    active: "",
-  };
-
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Status badge */}
-      {player.status !== "active" && (
-        <div
-          className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide ${statusColors[player.status]}`}
-        >
-          {statusLabels[player.status]}
-        </div>
-      )}
+      {/* Player card */}
+      <div
+        className={`relative px-2 py-2 rounded-lg bg-[#1a1b26]/80 border border-gray-400/40 ${
+          player.status === "folded" ? "opacity-50" : ""
+        }`}
+        style={{
+          backdropFilter: "blur(10px)",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+        }}
+      >
+        <div className="flex flex-col gap-1.5 w-[60px]">
+          {/* Player name */}
+          <div
+            className={`text-xs font-semibold truncate ${
+              player.status === "folded" ? "text-gray-500" : "text-white"
+            }`}
+          >
+            {player.name}
+          </div>
 
-      {/* Avatar */}
-      <div className="relative">
-        <div
-          className={`w-16 h-16 rounded-full overflow-hidden border-4 ${
-            player.status === "folded"
-              ? "border-red-500/50 opacity-50"
-              : "border-white/20"
-          }`}
-          style={{
-            background: `linear-gradient(135deg, ${player.avatar}, ${player.avatar}dd)`,
-          }}
-        >
-          <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-white">
-            {player.name.charAt(0)}
+          {/* Chips display */}
+          <div className="flex items-center gap-1">
+            <svg
+              className="w-3 h-3 text-gray-500"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <circle cx="10" cy="10" r="8" />
+            </svg>
+            <span className="text-xs font-medium text-gray-300">
+              {player.chips}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Player name */}
-      <div
-        className={`text-sm font-semibold ${
-          player.status === "folded" ? "text-gray-500" : "text-white"
-        }`}
-      >
-        {player.name}
-      </div>
-
-      {/* Chips display */}
-      <div
-        className={`flex items-center gap-1.5 ${
-          player.status === "folded" ? "opacity-50" : ""
-        }`}
-      >
-        <svg
-          className="w-4 h-4 text-gray-400"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <circle cx="10" cy="10" r="8" />
-        </svg>
-        <span className="text-sm font-semibold text-gray-300">
-          {player.chips}
-        </span>
-      </div>
-
-      {/* Current bet */}
+      {/* Bet circle below card */}
       {player.currentBet > 0 && player.status !== "folded" && (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-white/10 rounded-full">
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <circle cx="10" cy="10" r="8" />
-          </svg>
-          <span className="text-xs font-semibold">{player.currentBet}</span>
+        <div className="flex items-center justify-center w-7 h-7 rounded-full bg-white/10">
+          <span className="text-xs font-semibold text-white">
+            {player.currentBet}
+          </span>
         </div>
       )}
     </div>

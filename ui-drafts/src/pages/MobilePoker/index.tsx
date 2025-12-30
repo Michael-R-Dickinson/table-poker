@@ -19,6 +19,30 @@ export default function MobilePokerPage() {
       status: "folded" as const,
       avatar: "#f97316", // Orange
     },
+    {
+      id: "3",
+      name: "Sarah",
+      chips: 220,
+      currentBet: 20,
+      status: "raised" as const,
+      avatar: "#10b981", // Green
+    },
+    {
+      id: "4",
+      name: "Mike",
+      chips: 150,
+      currentBet: 0,
+      status: "active" as const,
+      avatar: "#3b82f6", // Blue
+    },
+    {
+      id: "5",
+      name: "Lisa",
+      chips: 100,
+      currentBet: 100,
+      status: "allin" as const,
+      avatar: "#a855f7", // Purple
+    },
   ];
 
   const playerCards = [
@@ -27,7 +51,6 @@ export default function MobilePokerPage() {
   ];
 
   const handleFold = () => console.log("Fold");
-  const handleCheck = () => console.log("Check");
   const handleCall = () => console.log("Call");
   const handleRaise = (amount: number) => console.log("Raise", amount);
 
@@ -37,10 +60,9 @@ export default function MobilePokerPage() {
       pot={50}
       playerCards={playerCards}
       playerChips={180}
-      playerCurrentBet={20}
+      playerCurrentBet={0}
       isPlayerTurn={true}
       onFold={handleFold}
-      onCheck={handleCheck}
       onCall={handleCall}
       onRaise={handleRaise}
     />

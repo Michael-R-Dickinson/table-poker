@@ -1,69 +1,84 @@
+import clubImg from "./assets/club.png"
+import diamondImg from "./assets/diamond.png"
+import heartImg from "./assets/heart.png"
+import spadeImg from "./assets/spade.png"
+
 interface CardProps {
-  rank: string;
-  suit: "hearts" | "diamonds" | "clubs" | "spades";
-  size?: "small" | "medium" | "large";
+  rank: string
+  suit: "hearts" | "diamonds" | "clubs" | "spades"
+  size?: "small" | "medium" | "large"
+}
+
+const suitImageMap = {
+  hearts: heartImg,
+  diamonds: diamondImg,
+  clubs: clubImg,
+  spades: spadeImg,
+}
+
+const suitColors = {
+  hearts: "text-red-500",
+  diamonds: "text-red-500",
+  clubs: "text-slate-800",
+  spades: "text-slate-800",
 }
 
 export function Card({ rank, suit, size = "medium" }: CardProps) {
-  const suitSymbols = {
-    hearts: "♥",
-    diamonds: "♦",
-    clubs: "♣",
-    spades: "♠",
-  };
-
-  const suitColors = {
-    hearts: "text-red-500",
-    diamonds: "text-red-500",
-    clubs: "text-gray-900",
-    spades: "text-gray-900",
-  };
+  const textColor = suitColors[suit]
+  const suitImage = suitImageMap[suit]
 
   const sizes = {
     small: {
-      container: "w-16 h-24",
-      rank: "text-2xl",
-      suit: "text-3xl",
+      container: "h-20 w-14",
+      topValue: "text-xl",
+      topSuit: "h-2.5 w-2.5",
+      bottomSuit: "h-7 w-7",
+      padding: "p-1.5",
     },
     medium: {
-      container: "w-20 h-28",
-      rank: "text-3xl",
-      suit: "text-4xl",
+      container: "h-28 w-20",
+      topValue: "text-3xl",
+      topSuit: "h-3.5 w-3.5",
+      bottomSuit: "h-12 w-12",
+      padding: "p-2",
     },
     large: {
-      container: "w-32 h-44",
-      rank: "text-5xl",
-      suit: "text-6xl",
+      container: "h-44 w-32",
+      topValue: "text-6xl",
+      topSuit: "h-5 w-5",
+      bottomSuit: "h-20 w-20",
+      padding: "p-3",
     },
-  };
+  }
 
-  const sizeConfig = sizes[size];
+  const sizeConfig = sizes[size]
 
   return (
     <div
-      className={`${sizeConfig.container} bg-white rounded-2xl shadow-2xl flex flex-col items-center justify-center relative overflow-hidden transform transition-transform hover:scale-105`}
+      className={`relative ${sizeConfig.container} ${sizeConfig.padding} rounded-xl border border-slate-200 bg-white shadow-xl`}
       style={{
-        boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
+        boxShadow:
+          "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1), 8px 8px 0px 0px rgb(0 0 0 / 0.08)",
       }}
     >
-      {/* Card content */}
-      <div className="flex flex-col items-center justify-center">
-        <div className={`${sizeConfig.rank} ${suitColors[suit]} font-bold`}>
+      <div className={`absolute left-2 top-2 flex items-center gap-0.5 ${textColor}`}>
+        <span className={`${sizeConfig.topValue} font-bold leading-none`}>
           {rank}
-        </div>
-        <div className={`${sizeConfig.suit} ${suitColors[suit]} -mt-2`}>
-          {suitSymbols[suit]}
-        </div>
+        </span>
+        <img
+          src={suitImage}
+          alt={suit}
+          className={`${sizeConfig.topSuit} opacity-80`}
+        />
       </div>
 
-      {/* Subtle gradient overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%)",
-        }}
-      />
+      <div className={`absolute bottom-2 right-2 ${textColor}`}>
+        <img
+          src={suitImage}
+          alt={suit}
+          className={`${sizeConfig.bottomSuit} object-contain opacity-90`}
+        />
+      </div>
     </div>
-  );
+  )
 }

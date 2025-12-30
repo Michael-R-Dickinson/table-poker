@@ -14,10 +14,11 @@ const Home = () => {
               Pulse - Personal Finance Tracker
             </a>
           </Link>
-          <Link href="/moon-poker-mobile">
-            <a className="text-blue-500 hover:underline">
-              Moon Poker Mobile
-            </a>
+          <Link href="/mobile-poker">
+            <a className="text-blue-500 hover:underline">Mobile Poker</a>
+          </Link>
+          <Link href="/playing-cards">
+            <a className="text-blue-500 hover:underline">Playing Cards</a>
           </Link>
         </div>
       </div>
