@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   },
   topInfoRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
     maxWidth: 768,
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   },
   bottomInfoRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: 16,
     maxWidth: 768,
@@ -428,7 +428,6 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
@@ -448,13 +447,11 @@ const styles = StyleSheet.create({
   },
   actionCardCenter: {
     flex: 1,
-    paddingTop: 16,
   },
   actionCardContent: {
     borderRadius: 12,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     paddingHorizontal: 24,
-    paddingVertical: 8,
+    paddingVertical: 12,
     alignItems: 'center',
   },
   actionLabelText: {
