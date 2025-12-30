@@ -42,6 +42,13 @@ export default function HomeScreen() {
             onPress={() => router.push('/mobile-poker-draft' as any)}
           />
         </View>
+
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Host Device UI Draft"
+            onPress={() => router.push('/host-device-draft' as any)}
+          />
+        </View>
       </ThemedView>
 
       <ThemedView style={styles.stepContainer}>

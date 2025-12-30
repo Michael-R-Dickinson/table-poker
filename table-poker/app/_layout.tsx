@@ -21,6 +21,10 @@ export default function RootLayout() {
           name="player-in-game"
           options={{ headerBackVisible: false, title: 'Player Game' }}
         />
+        <Stack.Screen
+          name="host-device-draft"
+          options={{ title: 'Host Device UI Draft' }}
+        />
       </Stack>
       <StatusBar style="light" />
     </ThemeProvider>
