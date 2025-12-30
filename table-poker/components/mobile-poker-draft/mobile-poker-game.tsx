@@ -89,16 +89,30 @@ export function MobilePokerGame({
           },
         ]}
       >
+        {/* Inner playing surface - creates the rail gap */}
         <View
           style={[
-            styles.tableInnerRail,
+            styles.tablePlayingSurface,
             {
-              borderTopWidth: railSize,
-              borderTopColor: '#0f1016',
+              marginTop: railSize,
+              marginLeft: railSize,
+              marginRight: railSize,
+              borderTopLeftRadius: screenWidth * 1.4 - railSize,
+              borderTopRightRadius: screenWidth * 1.4 - railSize,
             },
           ]}
-        />
-        <View style={[styles.tableInnerHighlight, { top: railSize }]} />
+        >
+          {/* Subtle highlight line at top of playing surface */}
+          <View
+            style={[
+              styles.tableInnerHighlight,
+              {
+                borderTopLeftRadius: screenWidth * 1.4 - railSize,
+                borderTopRightRadius: screenWidth * 1.4 - railSize,
+              },
+            ]}
+          />
+        </View>
       </View>
 
       <View style={styles.purpleGlow} />
@@ -223,15 +237,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#161722',
     overflow: 'hidden',
   },
-  tableInnerRail: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  tablePlayingSurface: {
+    flex: 1,
+    backgroundColor: '#0f1016',
+    overflow: 'hidden',
   },
   tableInnerHighlight: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
     height: 1,
