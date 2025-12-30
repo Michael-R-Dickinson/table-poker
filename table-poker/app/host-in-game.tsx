@@ -1,4 +1,11 @@
-import { StyleSheet, View, Button, ScrollView } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Button,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
@@ -11,6 +18,7 @@ import { Table } from 'poker-ts';
 import { useEffect, useMemo } from 'react';
 import { createGameControl } from '@/utils/host/game-control';
 import { useHostGameplay } from '@/hooks/host/use-host-gameplay';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HostInGameScreen() {
   const params = useLocalSearchParams();
@@ -101,6 +109,25 @@ export default function HostInGameScreen() {
     router.back();
   };
 
+  const handleBackPress = () => {
+    Alert.alert(
+      'End Game',
+      'Are you sure you want to exit? This will end the game and kick all players.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'End Game',
+          style: 'destructive',
+          onPress: handleEndGame,
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
   const handleLogGameState = () => {
     if (!pokerGame.table) {
       logger.warn('No poker table initialized');
@@ -168,6 +195,14 @@ export default function HostInGameScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={handleBackPress}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Ionicons name="arrow-back" size={28} color="#fff" />
+      </TouchableOpacity>
+
       <ThemedView style={styles.header}>
         <ThemedText type="title">Game In Progress</ThemedText>
       </ThemedView>
@@ -243,14 +278,7 @@ export default function HostInGameScreen() {
       </ThemedView>
 
       <ThemedView style={styles.section}>
-        <View style={styles.buttonRow}>
-          <View style={styles.button}>
-            <Button title="Log Game State" onPress={handleLogGameState} color="#2196F3" />
-          </View>
-          <View style={styles.button}>
-            <Button title="End Game" onPress={handleEndGame} color="#F44336" />
-          </View>
-        </View>
+        <Button title="Log Game State" onPress={handleLogGameState} color="#2196F3" />
       </ThemedView>
     </ScrollView>
   );
@@ -260,8 +288,18 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
   },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    zIndex: 10,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
   header: {
     marginBottom: 20,
+    marginTop: 20,
   },
   gameInfoContainer: {
     padding: 15,

@@ -1,6 +1,8 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useFocusEffect } from '@react-navigation/native';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/themed-text';
 import { HostCard } from '@/components/host-card';
 import { HostCardBack } from '@/components/host-card-back';
@@ -19,8 +21,35 @@ export default function HostDeviceDraftScreen() {
     };
   });
 
+  const handleBackPress = () => {
+    Alert.alert(
+      'Exit Preview',
+      'Are you sure you want to exit the host device UI preview?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Exit',
+          style: 'destructive',
+          onPress: () => router.back(),
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={handleBackPress}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Ionicons name="arrow-back" size={28} color="#fff" />
+      </TouchableOpacity>
+
       <View style={styles.contentContainer}>
         <View style={styles.topInfoRow}>
           <View style={styles.infoCard}>
@@ -163,6 +192,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 16,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    zIndex: 10,
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   contentContainer: {
     alignItems: 'center',
