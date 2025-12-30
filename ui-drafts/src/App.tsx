@@ -5,6 +5,7 @@ import Pulse from "./pages/Pulse"
 import NotFoundPage from "./pages/NotFoundPage"
 import MobilePokerPage from "./pages/MobilePoker"
 import PlayingCards from "./pages/PlayingCards/PlayingCards"
+import HostDeviceUI from "./pages/HostDeviceUI/HostDeviceUI"
 
 function App() {
   return (
@@ -23,6 +24,9 @@ function App() {
       </Route>
       <Route path="/playing-cards">
         <PlayingCards />
+      </Route>
+      <Route path="/host-device-ui">
+        <HostDeviceUI />
       </Route>
       <NotFoundPage />
     </Switch>
