@@ -1,18 +1,11 @@
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Shadow } from 'react-native-shadow-2';
-import {
-  Canvas,
-  Rect,
-  RadialGradient as SkiaRadialGradient,
-  vec,
-} from '@shopify/react-native-skia';
 import { Card } from './card';
 import { OpponentDisplay } from './opponent-display';
 import { ActionButtons } from './action-buttons';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+import { PokerTable } from './poker-table';
+import { PotDisplay } from './pot-display';
 
 interface Player {
   id: string;
@@ -49,10 +42,9 @@ export function MobilePokerGame({
   onCall,
   onRaise,
 }: MobilePokerGameProps) {
-  const railSize = 22;
-
   return (
     <View style={styles.container}>
+      {/* Background gradient creates depth from top to bottom */}
       <LinearGradient
         colors={['#0e0f16', '#050508']}
         start={{ x: 0.5, y: 0 }}
@@ -60,6 +52,7 @@ export function MobilePokerGame({
         style={StyleSheet.absoluteFill}
       />
 
+      {/* Opponents section at top with fade-out gradient */}
       <View style={styles.opponentsSection}>
         <LinearGradient
           colors={['#0e0f16', 'transparent']}
@@ -73,97 +66,19 @@ export function MobilePokerGame({
         </LinearGradient>
       </View>
 
-      <View style={styles.potContainer}>
-        <View style={styles.potLabel}>
-          <Ionicons name="wallet-outline" size={20} color="#9ca3af" />
-          <Text style={styles.potLabelText}>BET</Text>
-        </View>
-        <Text style={styles.potAmount}>{bet}</Text>
-      </View>
+      {/* Current pot/bet display */}
+      <PotDisplay amount={bet} />
 
-      {/* Two-layer outer purple glow shadows */}
-      <Shadow
-        distance={200}
-        offset={[0, 50]}
-        startColor="rgba(90, 60, 255, 0.10)"
-        // endColor="#050508"
-        containerStyle={{
-          position: 'absolute',
-          top: screenHeight * 0.5,
-          left: '50%',
-          marginLeft: -(screenWidth * 2.8) / 2,
-        }}
-      >
-        <Shadow
-          distance={1}
-          offset={[0, -1]}
-          startColor="rgba(138, 130, 255, 0.3)"
-          endColor="#050508"
-        >
-          {/* Table edge with gradient background */}
-          <LinearGradient
-            colors={['#161722', '#101016']}
-            locations={[0, 0.1]}
-            style={[
-              styles.tableEdge,
-              {
-                width: screenWidth * 2.8,
-                height: screenHeight * 0.7,
-                borderTopLeftRadius: screenWidth * 1.4,
-                borderTopRightRadius: screenWidth * 1.4,
-              },
-            ]}
-          >
-            {/* Inner playing surface - creates the rail gap */}
-            {/* CONSIDER COMMENTING */}
-            {/* <View
-              style={[
-                styles.tablePlayingSurface,
-                {
-                  marginTop: railSize,
-                  marginLeft: railSize,
-                  marginRight: railSize,
-                  borderTopLeftRadius: screenWidth * 1.4 - railSize,
-                  borderTopRightRadius: screenWidth * 1.4 - railSize,
-                },
-              ]}
-            > */}
-            {/* Subtle highlight line at top of playing surface */}
-            {/* <View
-                style={[
-                  styles.tableInnerHighlight,
-                  {
-                    borderTopLeftRadius: screenWidth * 1.4 - railSize,
-                    borderTopRightRadius: screenWidth * 1.4 - railSize,
-                  },
-                ]}
-              />
-            </View> */}
-          </LinearGradient>
-        </Shadow>
-      </Shadow>
+      {/* Poker table surface with shadow and glow effects */}
+      <PokerTable />
 
-      {/* Purple glow radial gradient */}
-      <Canvas style={styles.purpleGlow} pointerEvents="none">
-        <Rect x={0} y={0} width={600} height={screenHeight * 1.5}>
-          <SkiaRadialGradient
-            c={vec(300, screenHeight * 0.33)}
-            r={600}
-            colors={[
-              'rgba(138, 130, 255, 0.25)',
-              'rgba(90, 60, 255, 0.15)',
-              'transparent',
-            ]}
-            positions={[0, 0.3, 0.7]}
-          />
-        </Rect>
-      </Canvas>
-
+      {/* Player section at bottom with action buttons and cards */}
       <View style={styles.playerSection}>
         <LinearGradient
           colors={['transparent', 'rgba(5, 5, 8, 0.9)', '#050508']}
           style={styles.playerGradient}
         >
+          {/* Action buttons for player decisions */}
           <View style={styles.actionButtonsContainer}>
             <ActionButtons
               onFold={onFold}
@@ -173,6 +88,7 @@ export function MobilePokerGame({
             />
           </View>
 
+          {/* Display current bet if player has bet this round */}
           {playerCurrentBet > 0 && (
             <View style={styles.currentBetContainer}>
               <View style={styles.currentBetCircle}>
@@ -182,6 +98,7 @@ export function MobilePokerGame({
             </View>
           )}
 
+          {/* Player's hole cards with fan effect */}
           <View style={styles.playerCardsContainer}>
             {playerCards.map((card, index) => {
               const totalCards = playerCards.length;
@@ -207,6 +124,7 @@ export function MobilePokerGame({
             })}
           </View>
 
+          {/* Player's chip count */}
           <View style={styles.playerBankContainer}>
             <View style={styles.playerBank}>
               <Text style={styles.playerBankLabel}>Your Bank</Text>
@@ -242,58 +160,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     alignItems: 'flex-start',
     gap: 8,
-  },
-  potContainer: {
-    position: 'absolute',
-    top: 160,
-    left: 0,
-    right: 0,
-    flexDirection: 'column',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  potLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  potLabelText: {
-    fontSize: 14,
-    color: '#9ca3af',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  potAmount: {
-    fontSize: 70,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    letterSpacing: -2,
-  },
-  tableEdge: {
-    overflow: 'hidden',
-  },
-  tablePlayingSurface: {
-    flex: 1,
-    backgroundColor: '#0f1016',
-    overflow: 'hidden',
-  },
-  tableInnerHighlight: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-  },
-  purpleGlow: {
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    marginLeft: -300,
-    width: 600,
-    height: screenHeight * 1.5,
-    opacity: 0.3,
   },
   playerSection: {
     position: 'absolute',
