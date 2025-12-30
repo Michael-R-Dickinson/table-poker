@@ -4,6 +4,7 @@ import type { PlayerGameState, PlayerInfo, PlayerStatus } from '@/types/game-sta
 export function extractPlayerGameState(
   table: InstanceType<typeof Table>,
   playerSeatIndex: number,
+  seatToNameMap: Map<number, string>,
 ): PlayerGameState {
   const holeCards = table.holeCards();
   const seats = table.seats();
@@ -61,6 +62,7 @@ export function extractPlayerGameState(
 
         return {
           seatIndex,
+          name: seatToNameMap.get(seatIndex) || `Seat ${seatIndex}`,
           stack: player.stack,
           currentBet: player.betSize,
           status,

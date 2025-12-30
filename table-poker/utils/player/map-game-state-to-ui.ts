@@ -90,7 +90,7 @@ export function mapGameStateToUI(
     .filter((p) => p.seatIndex !== gameState.mySeatIndex)
     .map((player) => ({
       id: `seat-${player.seatIndex}`,
-      name: `Seat ${player.seatIndex}`,
+      name: player.name,
       chips: player.stack,
       currentBet: player.currentBet,
       status: mapPlayerStatus(player.status),

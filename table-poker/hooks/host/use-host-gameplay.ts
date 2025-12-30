@@ -71,9 +71,19 @@ export function useHostGameplay({
         players: connectedPlayers.length,
       });
 
+      // Create reverse map from seatIndex to playerName
+      const seatToPlayerMap = new Map<number, string>();
+      playerToSeatMap.forEach((seatIndex, playerId) => {
+        seatToPlayerMap.set(seatIndex, playerId);
+      });
+
       // Send each player their specific game state
       playerToSeatMap.forEach((seatIndex, playerId) => {
-        const gameState = extractPlayerGameState(pokerGame.table!, seatIndex);
+        const gameState = extractPlayerGameState(
+          pokerGame.table!,
+          seatIndex,
+          seatToPlayerMap,
+        );
         sendToPlayer(playerId, {
           type: 'game-state',
           state: gameState,

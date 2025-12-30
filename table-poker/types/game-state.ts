@@ -14,6 +14,7 @@ export type PlayerStatus = 'active' | 'folded' | 'all-in';
 
 export interface PlayerInfo {
   seatIndex: number;
+  name: string;
   stack: number;
   currentBet: number;
   status: PlayerStatus;
