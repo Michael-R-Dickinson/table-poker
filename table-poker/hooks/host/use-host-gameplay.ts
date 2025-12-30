@@ -1,10 +1,9 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
-import type { Table } from 'poker-ts';
 import type { PokerGameState } from '@/store/poker-game';
+import type { Action } from '@/types/game-state';
 import type { GameControlActions } from '@/utils/host/game-control';
 import { extractPlayerGameState } from '@/utils/player/game-state';
 import { logger } from '@/utils/shared/logger';
-import type { Action } from '@/types/game-state';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseHostGameplayProps {
   pokerGame: PokerGameState;
@@ -66,10 +65,10 @@ export function useHostGameplay({
       const communityCards = pokerGame.table.communityCards();
       setLastCommunityCards(communityCards);
 
-      logger.info('Broadcasting game state to all players', {
-        version: pokerGame.version,
-        players: connectedPlayers.length,
-      });
+      // logger.info('Broadcasting game state to all players', {
+      //   version: pokerGame.version,
+      //   players: connectedPlayers.length,
+      // });
 
       // Create reverse map from seatIndex to playerName
       const seatToPlayerMap = new Map<number, string>();

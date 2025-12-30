@@ -1,8 +1,8 @@
-import { useCallback } from 'react';
-import { useAtom } from 'jotai';
-import type { PlayerGameState, Action } from '@/types/game-state';
-import { logger } from '@/utils/shared/logger';
 import { playerGameAtom } from '@/store/player-game';
+import type { Action } from '@/types/game-state';
+import { logger } from '@/utils/shared/logger';
+import { useAtom } from 'jotai';
+import { useCallback } from 'react';
 
 interface UsePlayerGameplayProps {
   sendToHost: (data: any) => void;
@@ -13,7 +13,7 @@ export function usePlayerGameplay({ sendToHost }: UsePlayerGameplayProps) {
 
   const handleGameStateMessage = useCallback(
     (data: any) => {
-      logger.info('Received message from host:', data);
+      // logger.info('Received message from host:', data);
 
       if (data.type === 'game-state') {
         setPlayerGame((prev) => ({
