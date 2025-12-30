@@ -1,4 +1,6 @@
 import { View, StyleSheet } from 'react-native';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { useFocusEffect } from '@react-navigation/native';
 import { ThemedText } from '@/components/themed-text';
 import { HostCard } from '@/components/host-card';
 import { HostCardBack } from '@/components/host-card-back';
@@ -8,6 +10,14 @@ export default function HostDeviceDraftScreen() {
   const currentBet = 30;
   const mostRecentAction = 'Michael + $15';
   const previousActions = ['Sarah + $10', 'John calls'];
+
+  useFocusEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+
+    return () => {
+      ScreenOrientation.unlockAsync();
+    };
+  });
 
   return (
     <View style={styles.container}>
