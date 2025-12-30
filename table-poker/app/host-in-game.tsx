@@ -175,6 +175,7 @@ export default function HostInGameScreen() {
 
   // Calculate current bet (max bet among all seats)
   const currentBet = useMemo(() => {
+    logger.debug('Calculating current bet', { version: pokerGame.version });
     if (
       !pokerGame.table ||
       !pokerGame.table.isHandInProgress() ||
@@ -183,6 +184,7 @@ export default function HostInGameScreen() {
       return 0;
     }
     const seats = pokerGame.table.seats();
+    logger.debug('actually calculating current bet', { seats });
     return Math.max(...seats.map((s) => s?.betSize || 0));
   }, [pokerGame]);
 

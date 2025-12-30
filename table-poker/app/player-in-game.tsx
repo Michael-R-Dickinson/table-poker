@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -9,6 +9,7 @@ import { useMemo } from 'react';
 import { logger } from '@/utils/shared/logger';
 import { MobilePokerGame } from '@/components/mobile-poker-draft/mobile-poker-game';
 import { mapGameStateToUI } from '@/utils/player/map-game-state-to-ui';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function PlayerInGameScreen() {
   const params = useLocalSearchParams();
@@ -44,9 +45,26 @@ export default function PlayerInGameScreen() {
     });
 
   const handleLeaveGame = () => {
-    disconnectSignaling();
-    disconnectWebRTC();
-    router.replace('/');
+    Alert.alert(
+      'Leave Game',
+      'Are you sure you want to leave the game?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: () => {
+            disconnectSignaling();
+            disconnectWebRTC();
+            router.replace('/');
+          },
+        },
+      ],
+      { cancelable: true },
+    );
   };
 
   const uiState = useMemo(() => mapGameStateToUI(gameState), [gameState]);
@@ -54,6 +72,13 @@ export default function PlayerInGameScreen() {
   if (!uiState) {
     return (
       <View style={styles.container}>
+        <TouchableOpacity
+          style={styles.leaveButton}
+          onPress={handleLeaveGame}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="arrow-back" size={28} color="#fff" />
+        </TouchableOpacity>
         <ThemedView style={styles.waitingContainer}>
           <ThemedText style={styles.waitingTitle}>
             {connectionState === 'connected' ? 'Connected' : 'Connecting...'}
@@ -70,6 +95,13 @@ export default function PlayerInGameScreen() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity
+        style={styles.leaveButton}
+        onPress={handleLeaveGame}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Ionicons name="arrow-back" size={28} color="#fff" />
+      </TouchableOpacity>
       <MobilePokerGame
         opponents={uiState.opponents}
         playerCards={uiState.playerCards}
@@ -88,6 +120,26 @@ export default function PlayerInGameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  leaveButton: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    zIndex: 1000,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   waitingContainer: {
     flex: 1,
