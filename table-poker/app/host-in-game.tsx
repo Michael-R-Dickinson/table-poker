@@ -15,11 +15,19 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { useAtom } from 'jotai';
 import { Table } from 'poker-ts';
 import { useCallback, useEffect, useMemo } from 'react';
-import { Alert, Button, StyleSheet, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Button,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 export default function HostInGameScreen() {
   const params = useLocalSearchParams();
   const { smallBlind, bigBlind, buyIn } = params;
+  const { height } = useWindowDimensions();
 
   const [pokerGame, setPokerGame] = useAtom(pokerGameAtom);
 
@@ -213,7 +221,11 @@ export default function HostInGameScreen() {
 
   // Placeholder action history (TODO: implement real action tracking)
   const mostRecentAction = 'Waiting...';
-  const previousActions: string[] = ['hello', 'world'];
+  const allPreviousActions: string[] = ['hello', 'world'];
+
+  // Show 1 previous action on smaller screens, 2 on larger screens (based on height since we're in landscape)
+  const hasSpaceForTwoActions = height >= 600;
+  const previousActions = allPreviousActions.slice(0, hasSpaceForTwoActions ? 2 : 1);
 
   return (
     <View style={styles.container}>
@@ -411,7 +423,7 @@ const styles = StyleSheet.create({
   },
   topInfoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 16,
     maxWidth: 768,
@@ -420,7 +432,7 @@ const styles = StyleSheet.create({
   },
   bottomInfoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: 16,
     maxWidth: 768,
