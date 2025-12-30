@@ -1,21 +1,21 @@
-import { StyleSheet, View, Button, Alert, TouchableOpacity } from 'react-native';
-import * as ScreenOrientation from 'expo-screen-orientation';
-import { useFocusEffect } from '@react-navigation/native';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
-import { useWebRTCHost } from '@/hooks/host/use-webrtc-host';
-import { useLocalSearchParams, router } from 'expo-router';
-import { logger } from '@/utils/shared/logger';
-import { useAtom } from 'jotai';
-import { pokerGameAtom } from '@/store/poker-game';
-import { Table } from 'poker-ts';
-import { useEffect, useMemo, useCallback } from 'react';
-import { createGameControl } from '@/utils/host/game-control';
-import { useHostGameplay } from '@/hooks/host/use-host-gameplay';
-import { Ionicons } from '@expo/vector-icons';
 import { HostCard } from '@/components/host-card';
 import { HostCardBack } from '@/components/host-card-back';
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { useHostGameplay } from '@/hooks/host/use-host-gameplay';
+import { useWebRTCHost } from '@/hooks/host/use-webrtc-host';
+import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
+import { pokerGameAtom } from '@/store/poker-game';
+import { createGameControl } from '@/utils/host/game-control';
+import { logger } from '@/utils/shared/logger';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { router, useLocalSearchParams } from 'expo-router';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { useAtom } from 'jotai';
+import { Table } from 'poker-ts';
+import { useCallback, useEffect, useMemo } from 'react';
+import { Alert, Button, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function HostInGameScreen() {
   const params = useLocalSearchParams();
@@ -213,7 +213,7 @@ export default function HostInGameScreen() {
 
   // Placeholder action history (TODO: implement real action tracking)
   const mostRecentAction = 'Waiting...';
-  const previousActions: string[] = [];
+  const previousActions: string[] = ['hello', 'world'];
 
   return (
     <View style={styles.container}>
@@ -430,6 +430,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 8,
+    width: 120,
   },
   infoContent: {
     alignItems: 'center',
@@ -451,7 +452,8 @@ const styles = StyleSheet.create({
   actionCardContent: {
     borderRadius: 12,
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingTop: 12,
+    paddingBottom: 16,
     alignItems: 'center',
   },
   actionLabelText: {
@@ -470,6 +472,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#ffffff',
     textAlign: 'center',
+    lineHeight: 30,
   },
   previousActionText: {
     fontWeight: 'bold',
