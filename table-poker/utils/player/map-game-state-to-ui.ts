@@ -25,7 +25,6 @@ export interface UICard {
  */
 export interface MobilePokerUIState {
   opponents: UIPlayer[];
-  pot: number;
   playerCards: UICard[];
   playerChips: number;
   playerCurrentBet: number;
@@ -72,14 +71,6 @@ function getAvatarColor(seatIndex: number): string {
 }
 
 /**
- * Calculates the current pot from all player bets
- * Note: This only accounts for the current betting round
- */
-function calculatePot(players: PlayerGameState['players']): number {
-  return players.reduce((total, player) => total + player.currentBet, 0);
-}
-
-/**
  * Maps PlayerGameState to the props needed by MobilePokerGame component
  */
 export function mapGameStateToUI(
@@ -112,7 +103,6 @@ export function mapGameStateToUI(
 
   return {
     opponents,
-    pot: calculatePot(gameState.players),
     playerCards,
     playerChips: myPlayer.stack,
     playerCurrentBet: myPlayer.currentBet,

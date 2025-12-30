@@ -72,7 +72,6 @@ export default function PlayerInGameScreen() {
     <View style={styles.container}>
       <MobilePokerGame
         opponents={uiState.opponents}
-        pot={uiState.pot}
         playerCards={uiState.playerCards}
         playerChips={uiState.playerChips}
         playerCurrentBet={uiState.playerCurrentBet}

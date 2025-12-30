@@ -56,10 +56,9 @@ export default function MobilePokerDraftScreen() {
   return (
     <MobilePokerGame
       opponents={opponents}
-      pot={50}
       playerCards={playerCards}
       playerChips={180}
-      playerCurrentBet={0}
+      playerCurrentBet={20}
       isPlayerTurn={true}
       availableActions={['fold', 'call', 'raise']}
       onAction={handleAction}

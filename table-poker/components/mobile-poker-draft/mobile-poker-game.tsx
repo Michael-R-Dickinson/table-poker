@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 import type { Action } from '@/types/game-state';
 import { Card } from './card';
 import { OpponentDisplay } from './opponent-display';
@@ -19,7 +18,6 @@ interface Player {
 
 interface MobilePokerGameProps {
   opponents: Player[];
-  pot: number;
   playerCards: {
     rank: string;
     suit: 'hearts' | 'diamonds' | 'clubs' | 'spades';
@@ -35,7 +33,6 @@ interface MobilePokerGameProps {
 
 export function MobilePokerGame({
   opponents,
-  pot: bet,
   playerCards,
   playerChips,
   playerCurrentBet,
@@ -69,8 +66,8 @@ export function MobilePokerGame({
         </LinearGradient>
       </View>
 
-      {/* Current pot/bet display */}
-      <PotDisplay amount={bet} />
+      {/* Player's current bet display */}
+      <PotDisplay amount={playerCurrentBet} />
 
       {/* Poker table surface with shadow and glow effects */}
       <PokerTable />
@@ -90,16 +87,6 @@ export function MobilePokerGame({
               amountToCall={amountToCall}
             />
           </View>
-
-          {/* Display current bet if player has bet this round */}
-          {playerCurrentBet > 0 && (
-            <View style={styles.currentBetContainer}>
-              <View style={styles.currentBetCircle}>
-                <Ionicons name="ellipse" size={16} color="#ffffff" />
-                <Text style={styles.currentBetText}>{playerCurrentBet}</Text>
-              </View>
-            </View>
-          )}
 
           {/* Player's hole cards with fan effect */}
           <View style={styles.playerCardsContainer}>
@@ -177,24 +164,6 @@ const styles = StyleSheet.create({
   },
   actionButtonsContainer: {
     marginBottom: 24,
-  },
-  currentBetContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  currentBetCircle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
-  },
-  currentBetText: {
-    fontWeight: '600',
-    color: '#ffffff',
   },
   playerCardsContainer: {
     position: 'relative',
