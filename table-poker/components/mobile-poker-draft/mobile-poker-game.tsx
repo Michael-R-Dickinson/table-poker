@@ -83,10 +83,10 @@ export function MobilePokerGame({
 
       {/* Two-layer outer purple glow shadows */}
       <Shadow
-        distance={50}
-        offset={[0, -25]}
-        startColor="rgba(90, 60, 255, 0.15)"
-        endColor="transparent"
+        distance={200}
+        offset={[0, 50]}
+        startColor="rgba(90, 60, 255, 0.10)"
+        // endColor="#050508"
         containerStyle={{
           position: 'absolute',
           top: screenHeight * 0.5,
@@ -98,7 +98,7 @@ export function MobilePokerGame({
           distance={1}
           offset={[0, -1]}
           startColor="rgba(138, 130, 255, 0.3)"
-          endColor="transparent"
+          endColor="#050508"
         >
           {/* Table edge with gradient background */}
           <LinearGradient
@@ -115,7 +115,8 @@ export function MobilePokerGame({
             ]}
           >
             {/* Inner playing surface - creates the rail gap */}
-            <View
+            {/* CONSIDER COMMENTING */}
+            {/* <View
               style={[
                 styles.tablePlayingSurface,
                 {
@@ -126,9 +127,9 @@ export function MobilePokerGame({
                   borderTopRightRadius: screenWidth * 1.4 - railSize,
                 },
               ]}
-            >
-              {/* Subtle highlight line at top of playing surface */}
-              <View
+            > */}
+            {/* Subtle highlight line at top of playing surface */}
+            {/* <View
                 style={[
                   styles.tableInnerHighlight,
                   {
@@ -137,7 +138,7 @@ export function MobilePokerGame({
                   },
                 ]}
               />
-            </View>
+            </View> */}
           </LinearGradient>
         </Shadow>
       </Shadow>
