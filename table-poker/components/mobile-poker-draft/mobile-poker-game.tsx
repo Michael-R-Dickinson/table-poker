@@ -69,8 +69,11 @@ export function MobilePokerGame({
         </LinearGradient>
       </View>
 
-      {/* Player's current bet display */}
-      <PotDisplay amount={playerCurrentBet} />
+      {/* Current bet display with player's contribution */}
+      <PotDisplay
+        currentBet={playerCurrentBet + (amountToCall || 0)}
+        playerCurrentBet={playerCurrentBet}
+      />
 
       {/* Poker table surface with shadow and glow effects */}
       <PokerTable />
