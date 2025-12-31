@@ -112,6 +112,7 @@ export default function PlayerInGameScreen() {
         onAction={takeAction}
         chipRange={gameState?.chipRange || null}
         amountToCall={gameState?.amountToCall || null}
+        winningInfo={winningInfo}
       />
     </View>
   );

@@ -64,6 +64,7 @@ export default function MobilePokerDraftScreen() {
       onAction={handleAction}
       chipRange={{ min: 20, max: 180 }}
       amountToCall={20}
+      winningInfo={null}
     />
   );
 }

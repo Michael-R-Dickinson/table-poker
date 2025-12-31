@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Action } from '@/types/game-state';
+import type { WinningInfo } from '@/store/player-game';
 import { Card } from './card';
 import { OpponentDisplay } from './opponent-display';
 import { ActionButtons } from './action-buttons';
@@ -29,6 +30,7 @@ interface MobilePokerGameProps {
   onAction: (action: Action, amount?: number) => void;
   chipRange: { min: number; max: number } | null;
   amountToCall: number | null;
+  winningInfo: WinningInfo | null;
 }
 
 export function MobilePokerGame({
@@ -41,6 +43,7 @@ export function MobilePokerGame({
   onAction,
   chipRange,
   amountToCall,
+  winningInfo,
 }: MobilePokerGameProps) {
   return (
     <View style={styles.container}>
@@ -118,7 +121,12 @@ export function MobilePokerGame({
           <View style={styles.playerBankContainer}>
             <View style={styles.playerBank}>
               <Text style={styles.playerBankLabel}>Your Bank</Text>
-              <Text style={styles.playerBankAmount}>{playerChips}</Text>
+              <View style={styles.bankAmountContainer}>
+                <Text style={styles.playerBankAmount}>{playerChips}</Text>
+                {winningInfo && (
+                  <Text style={styles.winningAmount}> + {winningInfo.amount}</Text>
+                )}
+              </View>
             </View>
           </View>
         </LinearGradient>
@@ -192,9 +200,18 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 4,
   },
+  bankAmountContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
   playerBankAmount: {
     fontSize: 30,
     fontWeight: 'bold',
     color: '#ffffff',
+  },
+  winningAmount: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#22c55e',
   },
 });
