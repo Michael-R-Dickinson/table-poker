@@ -111,7 +111,12 @@ export function MobilePokerGame({
                     },
                   ]}
                 >
-                  <Card rank={card.rank} suit={card.suit} size="medium" />
+                  <Card
+                    rank={card.rank}
+                    suit={card.suit}
+                    size="medium"
+                    highlight={!!winningInfo}
+                  />
                 </View>
               );
             })}

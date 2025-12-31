@@ -1,6 +1,7 @@
 import type { PokerGameState } from '@/store/poker-game';
 import type { Action } from '@/types/game-state';
 import type { GameControlActions } from '@/utils/host/game-control';
+import type { PlayerActionInfo } from '@/utils/poker-utils/poker-utils';
 import { extractPlayerGameState } from '@/utils/player/game-state';
 import { logger } from '@/utils/shared/logger';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -26,6 +27,8 @@ interface WinnerInfo {
   amount: number;
 }
 
+const MAX_ACTION_HISTORY = 10;
+
 export function useHostGameplay({
   pokerGame,
   gameControl,
@@ -41,6 +44,7 @@ export function useHostGameplay({
   );
   const [lastCommunityCards, setLastCommunityCards] = useState<any[]>([]);
   const [handEndWinners, setHandEndWinners] = useState<WinnerInfo[] | null>(null);
+  const [actionHistory, setActionHistory] = useState<PlayerActionInfo[]>([]);
   const previousVersionRef = useRef<number>(0);
 
   // Broadcast game state to all players after any game state change
@@ -261,6 +265,16 @@ export function useHostGameplay({
 
       try {
         gameControl.takeAction(data.action, data.betSize);
+
+        // Add action to history
+        setActionHistory((prev) => {
+          const newAction: PlayerActionInfo = {
+            playerName: playerId,
+            action: data.action,
+            betSize: data.betSize,
+          };
+          return [newAction, ...prev].slice(0, MAX_ACTION_HISTORY);
+        });
       } catch (error) {
         logger.error('Failed to process player action:', error);
       }
@@ -271,6 +285,7 @@ export function useHostGameplay({
   const startNextHand = useCallback(() => {
     logger.info('Starting next hand');
     setHandEndWinners(null);
+    setActionHistory([]);
     gameControl.startHand();
   }, [gameControl]);
 
@@ -282,5 +297,6 @@ export function useHostGameplay({
     lastCommunityCards,
     handEndWinners,
     startNextHand,
+    actionHistory,
   };
 }

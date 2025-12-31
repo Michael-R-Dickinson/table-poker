@@ -4,6 +4,7 @@ interface CardProps {
   rank: string;
   suit: 'hearts' | 'diamonds' | 'clubs' | 'spades';
   size?: 'small' | 'medium' | 'large';
+  highlight?: boolean;
 }
 
 const suitImageMap = {
@@ -44,14 +45,19 @@ const sizes = {
   },
 };
 
-export function Card({ rank, suit, size = 'medium' }: CardProps) {
+export function Card({ rank, suit, size = 'medium', highlight = false }: CardProps) {
   const textColor = suitColors[suit];
   const suitImage = suitImageMap[suit];
   const sizeConfig = sizes[size];
 
   return (
     <View
-      style={[styles.container, sizeConfig.container, { padding: sizeConfig.padding }]}
+      style={[
+        styles.container,
+        sizeConfig.container,
+        { padding: sizeConfig.padding },
+        highlight && styles.highlight,
+      ]}
     >
       <View style={styles.topCorner}>
         <Text style={[styles.rankText, sizeConfig.topValue, { color: textColor }]}>
@@ -85,6 +91,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 5,
+  },
+  highlight: {
+    borderWidth: 3,
+    borderColor: '#22c55e',
+    shadowColor: '#22c55e',
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
   },
   topCorner: {
     position: 'absolute',

@@ -10,6 +10,7 @@ import { createGameControl } from '@/utils/host/game-control';
 import {
   calculateCurrentBet,
   calculatePotSize,
+  formatPlayerAction,
   mapCard,
 } from '@/utils/poker-utils/poker-utils';
 import { logger } from '@/utils/shared/logger';
@@ -74,6 +75,7 @@ export default function HostInGameScreen() {
     lastCommunityCards,
     handEndWinners,
     startNextHand,
+    actionHistory,
   } = useHostGameplay({
     pokerGame,
     gameControl,
@@ -178,13 +180,13 @@ export default function HostInGameScreen() {
     return [...mapped, ...Array(remaining).fill(null)];
   }, [communityCards]);
 
-  // Placeholder action history (TODO: implement real action tracking)
-  const mostRecentAction = 'Waiting...';
-  const allPreviousActions: string[] = ['hello', 'world'];
+  // Format action history for display
+  const formattedActions = actionHistory.map(formatPlayerAction);
+  const mostRecentAction = formattedActions[0] || 'Waiting...';
 
   // Show 1 previous action on smaller screens, 2 on larger screens (based on height since we're in landscape)
   const hasSpaceForTwoActions = height >= 600;
-  const previousActions = allPreviousActions.slice(0, hasSpaceForTwoActions ? 2 : 1);
+  const previousActions = formattedActions.slice(1, hasSpaceForTwoActions ? 3 : 2);
 
   return (
     <View style={styles.container}>

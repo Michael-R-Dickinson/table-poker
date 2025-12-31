@@ -54,3 +54,37 @@ export const calculateCurrentBet = (table: InstanceType<typeof Table> | null) =>
   const seats = table.seats();
   return Math.max(...seats.map((s) => s?.betSize || 0));
 };
+
+export interface PlayerActionInfo {
+  playerName: string;
+  action: 'fold' | 'check' | 'call' | 'bet' | 'raise';
+  betSize?: number;
+}
+
+/**
+ * Formats a player action into a readable string for display.
+ * Examples:
+ * - "Daanish calls"
+ * - "Michael checks"
+ * - "John + 15"
+ *
+ * @param actionInfo - The player action information
+ * @returns A formatted string describing the action
+ */
+export function formatPlayerAction(actionInfo: PlayerActionInfo): string {
+  const { playerName, action, betSize } = actionInfo;
+
+  switch (action) {
+    case 'fold':
+      return `${playerName} folds`;
+    case 'check':
+      return `${playerName} checks`;
+    case 'call':
+      return `${playerName} calls`;
+    case 'bet':
+    case 'raise':
+      return `${playerName} + ${betSize}`;
+    default:
+      return `${playerName} ${action}`;
+  }
+}
