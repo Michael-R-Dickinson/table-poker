@@ -91,6 +91,13 @@ export function MobilePokerGame({
             />
           </View>
 
+          {/* Winner text */}
+          {winningInfo && (
+            <View style={styles.winnerTextContainer}>
+              <Text style={styles.winnerText}>Winner</Text>
+            </View>
+          )}
+
           {/* Player's hole cards with fan effect */}
           <View style={styles.playerCardsContainer}>
             {playerCards.map((card, index) => {
@@ -111,12 +118,7 @@ export function MobilePokerGame({
                     },
                   ]}
                 >
-                  <Card
-                    rank={card.rank}
-                    suit={card.suit}
-                    size="medium"
-                    highlight={!!winningInfo}
-                  />
+                  <Card rank={card.rank} suit={card.suit} size="medium" />
                 </View>
               );
             })}
@@ -218,5 +220,16 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: 'bold',
     color: '#22c55e',
+  },
+  winnerTextContainer: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  winnerText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#22c55e',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
 });
