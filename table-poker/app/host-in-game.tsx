@@ -23,7 +23,6 @@ import { Table } from 'poker-ts';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
   Alert,
-  Button,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
@@ -306,9 +305,12 @@ export default function HostInGameScreen() {
 
       {/* Winner overlay */}
       {handEndWinners && handEndWinners.length > 0 && (
-        <View style={styles.winnerOverlay}>
+        <TouchableOpacity
+          style={styles.winnerOverlay}
+          activeOpacity={1}
+          onPress={startNextHand}
+        >
           <ThemedView style={styles.winnerSection}>
-            <ThemedText type="subtitle">Hand Results</ThemedText>
             {handEndWinners.map((winner) => (
               <ThemedView key={winner.seatIndex} style={styles.winnerItem}>
                 <ThemedText style={styles.winnerText}>
@@ -316,15 +318,11 @@ export default function HostInGameScreen() {
                 </ThemedText>
               </ThemedView>
             ))}
-            <View style={styles.continueButtonContainer}>
-              <Button
-                title="Continue to Next Hand"
-                onPress={startNextHand}
-                color="#4CAF50"
-              />
-            </View>
+            <ThemedText style={styles.tapToNextHandText}>
+              tap to deal next hand
+            </ThemedText>
           </ThemedView>
-        </View>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -415,21 +413,22 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 40,
     zIndex: 5,
   },
   winnerSection: {
-    padding: 20,
+    padding: 16,
     backgroundColor: '#e8f5e9',
     borderRadius: 16,
-    gap: 12,
-    maxWidth: 400,
+    gap: 10,
+    maxWidth: 500,
     width: '90%',
   },
   winnerItem: {
-    padding: 12,
+    padding: 10,
     backgroundColor: '#c8e6c9',
     borderRadius: 8,
   },
@@ -439,7 +438,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#1b5e20',
   },
-  continueButtonContainer: {
-    marginTop: 8,
+  tapToNextHandText: {
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    color: '#2e7d32',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
