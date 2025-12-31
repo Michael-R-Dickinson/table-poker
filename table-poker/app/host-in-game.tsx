@@ -1,5 +1,6 @@
 import { HostCard } from '@/components/host-card';
 import { HostCardBack } from '@/components/host-card-back';
+import { RecentActions } from '@/components/recent-actions';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useHostGameplay } from '@/hooks/host/use-host-gameplay';
@@ -10,7 +11,6 @@ import { createGameControl } from '@/utils/host/game-control';
 import {
   calculateCurrentBet,
   calculatePotSize,
-  formatPlayerAction,
   mapCard,
 } from '@/utils/poker-utils/poker-utils';
 import { logger } from '@/utils/shared/logger';
@@ -180,13 +180,8 @@ export default function HostInGameScreen() {
     return [...mapped, ...Array(remaining).fill(null)];
   }, [communityCards]);
 
-  // Format action history for display
-  const formattedActions = actionHistory.map(formatPlayerAction);
-  const mostRecentAction = formattedActions[0] || 'Waiting...';
-
   // Show 1 previous action on smaller screens, 2 on larger screens (based on height since we're in landscape)
   const hasSpaceForTwoActions = height >= 600;
-  const previousActions = formattedActions.slice(1, hasSpaceForTwoActions ? 3 : 2);
 
   return (
     <View style={styles.container}>
@@ -225,23 +220,10 @@ export default function HostInGameScreen() {
               >
                 ACTION
               </ThemedText>
-              <View style={styles.actionHistory}>
-                <ThemedText style={styles.recentActionText}>
-                  {mostRecentAction}
-                </ThemedText>
-                {previousActions.map((action, index) => {
-                  const opacity = 0.8 - index * 0.15;
-                  const fontSize = index === 0 ? 18 : index === 1 ? 16 : 14;
-                  return (
-                    <ThemedText
-                      key={index}
-                      style={[styles.previousActionText, { opacity, fontSize }]}
-                    >
-                      {action}
-                    </ThemedText>
-                  );
-                })}
-              </View>
+              <RecentActions
+                actionHistory={actionHistory}
+                hasSpaceForTwoActions={hasSpaceForTwoActions}
+              />
             </View>
           </View>
 
@@ -298,23 +280,10 @@ export default function HostInGameScreen() {
               >
                 ACTION
               </ThemedText>
-              <View style={styles.actionHistory}>
-                <ThemedText style={styles.recentActionText}>
-                  {mostRecentAction}
-                </ThemedText>
-                {previousActions.map((action, index) => {
-                  const opacity = 0.8 - index * 0.15;
-                  const fontSize = index === 0 ? 18 : index === 1 ? 16 : 14;
-                  return (
-                    <ThemedText
-                      key={index}
-                      style={[styles.previousActionText, { opacity, fontSize }]}
-                    >
-                      {action}
-                    </ThemedText>
-                  );
-                })}
-              </View>
+              <RecentActions
+                actionHistory={actionHistory}
+                hasSpaceForTwoActions={hasSpaceForTwoActions}
+              />
             </View>
           </View>
 
@@ -435,22 +404,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     marginBottom: 4,
-  },
-  actionHistory: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  recentActionText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
-    lineHeight: 30,
-  },
-  previousActionText: {
-    fontWeight: 'bold',
-    color: '#ffffff',
-    textAlign: 'center',
   },
   communityCardsContainer: {
     flexDirection: 'row',

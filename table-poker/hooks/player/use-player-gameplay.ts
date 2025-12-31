@@ -28,13 +28,10 @@ export function usePlayerGameplay({ sendToHost }: UsePlayerGameplayProps) {
         );
 
         if (myWinning) {
-          logger.info('I won!', myWinning);
           setPlayerGame((prev) => ({
             ...prev,
             winningInfo: myWinning,
           }));
-        } else {
-          logger.info('I did not win this hand');
         }
       }
     },
