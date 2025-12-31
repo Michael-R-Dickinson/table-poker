@@ -7,6 +7,11 @@ import { useWebRTCHost } from '@/hooks/host/use-webrtc-host';
 import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
 import { pokerGameAtom } from '@/store/poker-game';
 import { createGameControl } from '@/utils/host/game-control';
+import {
+  calculateCurrentBet,
+  calculatePotSize,
+  mapCard,
+} from '@/utils/poker-utils/poker-utils';
 import { logger } from '@/utils/shared/logger';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -23,7 +28,6 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-
 export default function HostInGameScreen() {
   const params = useLocalSearchParams();
   const { smallBlind, bigBlind, buyIn } = params;
@@ -164,55 +168,8 @@ export default function HostInGameScreen() {
     return cards;
   }, [pokerGame, lastCommunityCards]);
 
-  // Calculate pot size
-  const potSize = useMemo(() => {
-    if (!pokerGame.table || !pokerGame.table.isHandInProgress()) {
-      return 0;
-    }
-    const pots = pokerGame.table.pots();
-    return pots.reduce((total, pot) => total + pot.size, 0);
-  }, [pokerGame]);
-
-  // Calculate current bet (max bet among all seats)
-  const currentBet = useMemo(() => {
-    logger.debug('Calculating current bet', { version: pokerGame.version });
-    if (
-      !pokerGame.table ||
-      !pokerGame.table.isHandInProgress() ||
-      !pokerGame.table.isBettingRoundInProgress()
-    ) {
-      return 0;
-    }
-    const seats = pokerGame.table.seats();
-    logger.debug('actually calculating current bet', { seats });
-    return Math.max(...seats.map((s) => s?.betSize || 0));
-  }, [pokerGame]);
-
-  // Map poker-ts card to HostCard format
-  const mapCard = (card: any) => {
-    if (!card) return null;
-
-    const suitMap: { [key: string]: 'club' | 'diamond' | 'heart' | 'spade' } = {
-      clubs: 'club',
-      diamonds: 'diamond',
-      hearts: 'heart',
-      spades: 'spade',
-    };
-
-    const valueMap: { [key: string]: string } = {
-      '10': '10',
-    };
-
-    const suit = suitMap[card.suit];
-    const value = (valueMap[card.rank] || card.rank) as any;
-
-    return { suit, value };
-  };
-
-  logger.debug('Rendering HostInGameScreen', {
-    communityCards,
-    version: pokerGame.version,
-  });
+  const potSize = calculatePotSize(pokerGame.table);
+  const currentBet = calculateCurrentBet(pokerGame.table);
 
   // Prepare community cards for display (max 5, fill with card backs)
   const displayCards = useMemo(() => {
