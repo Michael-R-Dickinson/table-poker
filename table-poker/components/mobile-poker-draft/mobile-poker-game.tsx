@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
   opponentsGradient: {
     paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingTop: 54,
     paddingBottom: 16,
   },
   opponentsContainer: {

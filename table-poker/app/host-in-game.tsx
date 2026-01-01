@@ -23,6 +23,7 @@ import { Table } from 'poker-ts';
 import { useCallback, useEffect, useMemo } from 'react';
 import {
   Alert,
+  BackHandler,
   StyleSheet,
   TouchableOpacity,
   useWindowDimensions,
@@ -148,6 +149,15 @@ export default function HostInGameScreen() {
       { cancelable: true },
     );
   };
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleBackPress();
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, []);
 
   const communityCards = useMemo(() => {
     if (!pokerGame.table) {
@@ -338,7 +348,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 20,
+    top: 40,
     left: 20,
     zIndex: 10,
     padding: 8,
