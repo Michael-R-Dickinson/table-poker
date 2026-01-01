@@ -50,27 +50,30 @@ export function extractPlayerGameState(
   // Build player info array
   // Note: This array is ordered by seat position clockwise around the table,
   // not necessarily starting with the small blind
-  const players: PlayerInfo[] = handPlayers
+  const players: PlayerInfo[] = seats
     .map(
       (
-        player: { totalChips: number; stack: number; betSize: number } | null,
+        seat: { totalChips: number; stack: number; betSize: number } | null,
         seatIndex: number,
       ) => {
-        if (!player) return null;
+        if (!seat) return null;
 
         // Determine player status
-        // Note: handPlayers() returns null for folded players, so if we reach
-        // this point, the player is either active or all-in
+        // handPlayers() returns null for folded players
+        const isInHand = handPlayers[seatIndex] !== null;
         let status: PlayerStatus = 'active';
-        if (player.stack === 0) {
+
+        if (!isInHand) {
+          status = 'folded';
+        } else if (seat.stack === 0) {
           status = 'all-in';
         }
 
         return {
           seatIndex,
           name: seatToNameMap.get(seatIndex) || `Seat ${seatIndex}`,
-          stack: player.stack,
-          currentBet: player.betSize,
+          stack: seat.stack,
+          currentBet: seat.betSize,
           status,
         } as PlayerInfo;
       },
