@@ -8,7 +8,15 @@ import { mapGameStateToUI } from '@/utils/player/map-game-state-to-ui';
 import { logger } from '@/utils/shared/logger';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo } from 'react';
-import { Alert, BackHandler, SafeAreaView, StyleSheet } from 'react-native';
+import {
+  Alert,
+  BackHandler,
+  Modal,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
 
 export default function PlayerInGameScreen() {
   const params = useLocalSearchParams();
@@ -108,6 +116,30 @@ export default function PlayerInGameScreen() {
         amountToCall={gameState?.amountToCall || null}
         winningInfo={winningInfo}
       />
+
+      <Modal
+        visible={connectionState === 'disconnected'}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ThemedText style={styles.modalTitle}>
+              Disconnected from host device
+            </ThemedText>
+            <Pressable
+              style={styles.leaveButton}
+              onPress={() => {
+                disconnectSignaling();
+                disconnectWebRTC();
+                router.replace('/');
+              }}
+            >
+              <ThemedText style={styles.leaveButtonText}>Leave Game</ThemedText>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -134,5 +166,37 @@ const styles = StyleSheet.create({
   waitingInfo: {
     fontSize: 14,
     color: '#999',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    alignItems: 'center',
+    gap: 20,
+    minWidth: 280,
+    maxWidth: 320,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#333',
+  },
+  leaveButton: {
+    backgroundColor: '#dc2626',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  leaveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
