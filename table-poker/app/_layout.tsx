@@ -15,7 +15,6 @@ export default function RootLayout() {
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
         <Stack.Screen name="host-in-game" options={{ headerShown: false }} />
         <Stack.Screen name="player-in-game" options={{ headerShown: false }} />
-        <Stack.Screen name="host-device-draft" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="light" />
     </ThemeProvider>
