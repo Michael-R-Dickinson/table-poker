@@ -1,5 +1,8 @@
 import { Image } from 'expo-image';
 import { StyleSheet, Button, View } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { useCallback } from 'react';
 
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
@@ -8,6 +11,12 @@ import { ThemedView } from '@/components/themed-view';
 import { router } from 'expo-router';
 
 export default function HomeScreen() {
+  // Lock to portrait orientation
+  useFocusEffect(
+    useCallback(() => {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
+    }, []),
+  );
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}

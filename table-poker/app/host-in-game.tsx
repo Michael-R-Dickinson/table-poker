@@ -42,7 +42,7 @@ export default function HostInGameScreen() {
   );
 
   // Reuse existing signaling connection (already established in host screen)
-  const { sendMessage } = useSignalingConnection({
+  const { sendMessage, disconnect } = useSignalingConnection({
     onMessage: (message) => {
       handleSignalingMessage(message);
     },
@@ -89,10 +89,6 @@ export default function HostInGameScreen() {
   useFocusEffect(
     useCallback(() => {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-
-      return () => {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
-      };
     }, []),
   );
 
@@ -128,7 +124,8 @@ export default function HostInGameScreen() {
       type: 'game_end',
     });
     cleanupWebRTC();
-    router.back();
+    disconnect();
+    router.replace('/');
   };
 
   const handleBackPress = () => {
