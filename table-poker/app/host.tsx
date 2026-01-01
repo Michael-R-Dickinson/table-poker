@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { logger } from '@/utils/shared/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
 import { ROUTES } from '@/constants/routes';
+import { DEBUG_MODE } from '@/constants/config';
 
 export default function HostScreen() {
   const [gameCode, setGameCode] = useState('');
@@ -42,11 +43,9 @@ export default function HostScreen() {
 
   console.log('connected players state updated: ', connectedPlayers);
   const generateGameCode = () => {
-    // Production: random code generation
-    // const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-    // Testing: fixed code for easier development
-    const code = 'AAAAAA';
+    const code = DEBUG_MODE
+      ? 'AAAAAA'
+      : Math.random().toString(36).substring(2, 8).toUpperCase();
 
     setGameCode(code);
     return code;

@@ -1,0 +1,90 @@
+import { ExpoConfig, ConfigContext } from 'expo/config';
+
+export default ({ config }: ConfigContext): ExpoConfig => ({
+  ...config,
+  name: 'table-poker',
+  slug: 'table-poker',
+  version: '1.0.0',
+  orientation: 'portrait',
+  icon: './assets/images/icon.png',
+  scheme: 'table-poker',
+  userInterfaceStyle: 'dark',
+  newArchEnabled: true,
+  ios: {
+    supportsTablet: true,
+    bundleIdentifier: 'com.michaeldickinson20i.tablepoker',
+    bitcode: false,
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
+  },
+  android: {
+    adaptiveIcon: {
+      backgroundColor: '#E6F4FE',
+      foregroundImage: './assets/images/android-icon-foreground.png',
+      backgroundImage: './assets/images/android-icon-background.png',
+      monochromeImage: './assets/images/android-icon-monochrome.png',
+    },
+    edgeToEdgeEnabled: true,
+    predictiveBackGestureEnabled: false,
+    package: 'com.michaeldickinson20i.tablepoker',
+    permissions: [
+      'android.permission.ACCESS_NETWORK_STATE',
+      'android.permission.CAMERA',
+      'android.permission.INTERNET',
+      'android.permission.MODIFY_AUDIO_SETTINGS',
+      'android.permission.RECORD_AUDIO',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+      'android.permission.WAKE_LOCK',
+      'android.permission.BLUETOOTH',
+    ],
+  },
+  web: {
+    output: 'static',
+    favicon: './assets/images/favicon.png',
+  },
+  plugins: [
+    'expo-router',
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/images/splash-icon.png',
+        imageWidth: 200,
+        resizeMode: 'contain',
+        backgroundColor: '#ffffff',
+        dark: {
+          backgroundColor: '#000000',
+        },
+      },
+    ],
+    '@config-plugins/react-native-webrtc',
+    [
+      'expo-build-properties',
+      {
+        android: {
+          packagingOptions: {
+            pickFirst: ['**/libcrypto.so'],
+          },
+        },
+      },
+    ],
+  ],
+  experiments: {
+    typedRoutes: true,
+    reactCompiler: true,
+  },
+  extra: {
+    router: {},
+    eas: {
+      projectId: '125235e1-86f6-4da4-9c57-8d1614c25179',
+    },
+    debugMode: process.env.DEBUG_MODE === 'true',
+  },
+  owner: 'asianmike',
+  updates: {
+    url: 'https://u.expo.dev/30caaf7d-a899-476f-97eb-90a2e9036a6b',
+  },
+  runtimeVersion: {
+    policy: 'appVersion',
+  },
+});

@@ -8,10 +8,11 @@ import { router } from 'expo-router';
 import { logger } from '@/utils/shared/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
 import { ROUTES } from '@/constants/routes';
+import { DEBUG_MODE } from '@/constants/config';
 
 export default function JoinScreen() {
-  const [gameCode, setGameCode] = useState('AAAAAA');
-  const [playerName, setPlayerName] = useState('player');
+  const [gameCode, setGameCode] = useState(DEBUG_MODE ? 'AAAAAA' : '');
+  const [playerName, setPlayerName] = useState(DEBUG_MODE ? 'player' : '');
   const [isJoining, setIsJoining] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
