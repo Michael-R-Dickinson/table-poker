@@ -74,7 +74,44 @@ function getAvatarColor(seatIndex: number): string {
 }
 
 /**
+ * Position maps for different table sizes
+ * Each array maps relative position index to position label
+ * Index 0 = button, 1 = small blind, 2 = big blind, etc.
+ */
+const POSITION_MAPS: Record<number, string[]> = {
+  2: ['BTN/SB', 'BB'],
+  3: ['BTN', 'SB', 'BB'],
+  4: ['BTN', 'SB', 'BB', 'CO'],
+  5: ['BTN', 'SB', 'BB', 'UTG', 'CO'],
+  6: ['BTN', 'SB', 'BB', 'UTG', 'HJ', 'CO'],
+  7: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'HJ', 'CO'],
+  8: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'UTG+2', 'HJ', 'CO'],
+  9: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'UTG+2', 'MP', 'HJ', 'CO'],
+  10: ['BTN', 'SB', 'BB', 'UTG', 'UTG+1', 'UTG+2', 'MP1', 'MP2', 'HJ', 'CO'],
+};
+
+/**
+ * Calculates relative position from button (0 = button, 1 = next seat clockwise, etc.)
+ */
+function getRelativePosition(
+  seatIndex: number,
+  buttonSeat: number,
+  activePlayers: number[],
+): number {
+  // Create a mapping of seat index to relative position
+  const seatToRelativePos = new Map<number, number>();
+
+  activePlayers.forEach((seat) => {
+    const offset = (seat - buttonSeat + activePlayers.length) % activePlayers.length;
+    seatToRelativePos.set(seat, offset);
+  });
+
+  return seatToRelativePos.get(seatIndex) ?? 0;
+}
+
+/**
  * Calculates poker position label based on button position and number of players
+ * Uses a table-driven approach for clarity and maintainability
  */
 function getPositionLabel(
   seatIndex: number,
@@ -83,52 +120,17 @@ function getPositionLabel(
 ): string {
   const numPlayers = activePlayers.length;
 
-  // Find relative position from button (0 = button, 1 = next after button, etc.)
-  const sortedSeats = [...activePlayers].sort((a, b) => {
-    const aOffset = (a - buttonSeat + activePlayers.length) % activePlayers.length;
-    const bOffset = (b - buttonSeat + activePlayers.length) % activePlayers.length;
-    return aOffset - bOffset;
-  });
-
-  const relativePosition = sortedSeats.indexOf(seatIndex);
-
-  // Assign position labels based on number of players
-  if (numPlayers === 2) {
-    // Heads up: button is also small blind
-    return relativePosition === 0 ? 'BTN/SB' : 'BB';
+  // Get the position map for this table size
+  const positionMap = POSITION_MAPS[numPlayers];
+  if (!positionMap) {
+    return ''; // Unsupported table size
   }
 
-  // Standard positions
-  if (relativePosition === 0) return 'BTN';
-  if (relativePosition === 1) return 'SB';
-  if (relativePosition === 2) return 'BB';
+  // Calculate relative position from button
+  const relativePosition = getRelativePosition(seatIndex, buttonSeat, activePlayers);
 
-  // Additional positions for more players
-  if (numPlayers === 3) {
-    return 'BTN'; // Already handled above, this shouldn't be reached
-  } else if (numPlayers === 4) {
-    return 'CO';
-  } else if (numPlayers === 5) {
-    return relativePosition === 3 ? 'UTG' : 'CO';
-  } else if (numPlayers === 6) {
-    if (relativePosition === 3) return 'UTG';
-    if (relativePosition === 4) return 'HJ';
-    return 'CO';
-  } else if (numPlayers === 7) {
-    if (relativePosition === 3) return 'UTG';
-    if (relativePosition === 4) return 'UTG+1';
-    if (relativePosition === 5) return 'HJ';
-    return 'CO';
-  } else if (numPlayers >= 8) {
-    if (relativePosition === 3) return 'UTG';
-    if (relativePosition === 4) return 'UTG+1';
-    if (relativePosition === 5) return 'UTG+2';
-    if (relativePosition === numPlayers - 2) return 'HJ';
-    if (relativePosition === numPlayers - 1) return 'CO';
-    return `UTG+${relativePosition - 3}`;
-  }
-
-  return '';
+  // Look up the position label
+  return positionMap[relativePosition] || '';
 }
 
 /**
