@@ -135,6 +135,48 @@ def handle_message(event, connection_id):
 
         # Special handling for 'join' message - send to HOST
         if message_type == 'join':
+            # Check for duplicate player names
+            joining_player_id = sender_data.get('playerId')
+            for item in game_connections:
+                existing_player_id = item.get('playerId')
+                # Skip HOST and the current connection
+                if existing_player_id == 'HOST' or item.get('connectionId') == connection_id:
+                    continue
+                # Check if another player with the same name exists
+                if existing_player_id == joining_player_id:
+                    print(f"Duplicate player name detected: {joining_player_id}")
+                    # Send error message back to sender
+                    domain = event.get('requestContext', {}).get('domainName')
+                    stage = event.get('requestContext', {}).get('stage')
+
+                    if apigateway_management is None:
+                        apigateway_management = boto3.client(
+                            'apigatewaymanagementapi',
+                            endpoint_url=f"https://{domain}/{stage}"
+                        )
+
+                    error_message = {
+                        'type': 'error',
+                        'payload': {
+                            'code': 'DUPLICATE_NAME',
+                            'message': f'A player with the name "{joining_player_id}" has already joined this game. Please choose a different name.'
+                        }
+                    }
+
+                    try:
+                        apigateway_management.post_to_connection(
+                            ConnectionId=connection_id,
+                            Data=json.dumps(error_message).encode('utf-8')
+                        )
+                        print(f"Duplicate name error sent to {connection_id}")
+                    except Exception as e:
+                        print(f"Failed to send error message: {str(e)}")
+
+                    return {
+                        'statusCode': 200,
+                        'body': json.dumps({'message': 'Error sent to client'})
+                    }
+
             # Find host (connection with playerId='HOST')
             target_connection_id = None
             for item in game_connections:
