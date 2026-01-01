@@ -1,11 +1,18 @@
-import { StyleSheet, View, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Alert,
+  SafeAreaView,
+  BackHandler,
+} from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
 import { useWebRTCPlayer } from '@/hooks/player/use-webrtc-player';
 import { usePlayerGameplay } from '@/hooks/player/use-player-gameplay';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/utils/shared/logger';
 import { MobilePokerGame } from '@/components/mobile-poker-draft/mobile-poker-game';
 import { mapGameStateToUI } from '@/utils/player/map-game-state-to-ui';
@@ -44,7 +51,7 @@ export default function PlayerInGameScreen() {
       sendToHost,
     });
 
-  const handleLeaveGame = () => {
+  const handleLeaveGame = useCallback(() => {
     Alert.alert(
       'Leave Game',
       'Are you sure you want to leave the game?',
@@ -65,7 +72,16 @@ export default function PlayerInGameScreen() {
       ],
       { cancelable: true },
     );
-  };
+  }, [disconnectSignaling, disconnectWebRTC]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleLeaveGame();
+      return true;
+    });
+
+    return () => backHandler.remove();
+  }, [handleLeaveGame]);
 
   const uiState = useMemo(() => mapGameStateToUI(gameState), [gameState]);
 
@@ -124,7 +140,7 @@ const styles = StyleSheet.create({
   },
   leaveButton: {
     position: 'absolute',
-    top: 10,
+    top: 30,
     left: 20,
     zIndex: 1000,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',

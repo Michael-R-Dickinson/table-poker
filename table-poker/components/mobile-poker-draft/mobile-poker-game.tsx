@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Action } from '@/types/game-state';
 import type { WinningInfo } from '@/store/player-game';
+import { useState } from 'react';
 import { Card } from './card';
 import { OpponentDisplay } from './opponent-display';
 import { ActionButtons } from './action-buttons';
@@ -45,6 +46,14 @@ export function MobilePokerGame({
   amountToCall,
   winningInfo,
 }: MobilePokerGameProps) {
+  const [isInRaiseMode, setIsInRaiseMode] = useState(false);
+  const [pendingRaiseAmount, setPendingRaiseAmount] = useState(0);
+
+  const handleRaiseModeChange = (isActive: boolean, amount: number) => {
+    setIsInRaiseMode(isActive);
+    setPendingRaiseAmount(amount);
+  };
+
   return (
     <View style={styles.container}>
       {/* Background gradient creates depth from top to bottom */}
@@ -73,6 +82,8 @@ export function MobilePokerGame({
       <PotDisplay
         currentBet={playerCurrentBet + (amountToCall || 0)}
         playerCurrentBet={playerCurrentBet}
+        isInRaiseMode={isInRaiseMode}
+        pendingRaiseAmount={pendingRaiseAmount}
       />
 
       {/* Poker table surface with shadow and glow effects */}
@@ -91,6 +102,7 @@ export function MobilePokerGame({
               onAction={onAction}
               chipRange={chipRange}
               amountToCall={amountToCall}
+              onRaiseModeChange={handleRaiseModeChange}
             />
           </View>
 
@@ -160,7 +172,7 @@ const styles = StyleSheet.create({
   },
   opponentsGradient: {
     paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingTop: 50,
     paddingBottom: 16,
   },
   opponentsContainer: {
