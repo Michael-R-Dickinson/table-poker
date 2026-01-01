@@ -27,6 +27,7 @@ export interface PlayerGameState {
   availableActions: Action[] | null;
   chipRange: ChipRange | null;
   amountToCall: number | null;
+  buttonSeat: number | null;
   // Players ordered clockwise around the table (not necessarily starting with SB)
   players: PlayerInfo[];
 }

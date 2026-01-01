@@ -18,9 +18,15 @@ export function extractPlayerGameState(
   let availableActions = null;
   let chipRange = null;
   let amountToCall: number | null = null;
+  let buttonSeat: number | null = null;
 
   const bettingRoundInProgress =
     table.isHandInProgress() && table.isBettingRoundInProgress();
+
+  // Get button position if hand is in progress
+  if (table.isHandInProgress()) {
+    buttonSeat = table.button();
+  }
 
   if (bettingRoundInProgress) {
     playerToAct = table.playerToAct();
@@ -78,6 +84,7 @@ export function extractPlayerGameState(
     availableActions,
     chipRange,
     amountToCall,
+    buttonSeat,
     players,
   };
 }

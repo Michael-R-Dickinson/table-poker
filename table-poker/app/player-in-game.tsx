@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -71,7 +71,7 @@ export default function PlayerInGameScreen() {
 
   if (!uiState) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <TouchableOpacity
           style={styles.leaveButton}
           onPress={handleLeaveGame}
@@ -89,12 +89,12 @@ export default function PlayerInGameScreen() {
           <ThemedText style={styles.waitingInfo}>Game: {gameCode}</ThemedText>
           <ThemedText style={styles.waitingInfo}>Player: {playerName}</ThemedText>
         </ThemedView>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <TouchableOpacity
         style={styles.leaveButton}
         onPress={handleLeaveGame}
@@ -114,7 +114,7 @@ export default function PlayerInGameScreen() {
         amountToCall={gameState?.amountToCall || null}
         winningInfo={winningInfo}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   },
   leaveButton: {
     position: 'absolute',
-    top: 50,
+    top: 10,
     left: 20,
     zIndex: 1000,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',

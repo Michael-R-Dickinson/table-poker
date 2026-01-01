@@ -9,6 +9,9 @@ interface OpponentDisplayProps {
     currentBet: number;
     status: 'active' | 'folded' | 'called' | 'raised' | 'allin';
     avatar: string;
+    position?: string;
+    isCurrentPlayer?: boolean;
+    isPlayerToAct?: boolean;
   };
 }
 
@@ -16,13 +19,23 @@ export function OpponentDisplay({ player }: OpponentDisplayProps) {
   return (
     <View style={styles.container}>
       <View
-        style={[styles.playerCard, player.status === 'folded' && styles.playerCardFolded]}
+        style={[
+          styles.playerCard,
+          player.status === 'folded' && styles.playerCardFolded,
+          player.isPlayerToAct && styles.playerCardToAct,
+        ]}
       >
         <View style={styles.playerInfo}>
+          {player.position && (
+            <Text style={styles.positionText} numberOfLines={1}>
+              {player.position}
+            </Text>
+          )}
           <Text
             style={[
               styles.playerName,
               player.status === 'folded' && styles.playerNameFolded,
+              player.isCurrentPlayer && styles.playerNameCurrent,
             ]}
             numberOfLines={1}
           >
@@ -30,7 +43,7 @@ export function OpponentDisplay({ player }: OpponentDisplayProps) {
           </Text>
 
           <View style={styles.chipsContainer}>
-            <Ionicons name="ellipse" size={12} color="#6b7280" />
+            <Ionicons name="ellipse" size={14} color="#6b7280" />
             <Text style={styles.chipsText}>{player.chips}</Text>
           </View>
         </View>
@@ -52,11 +65,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   playerCard: {
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
     backgroundColor: 'rgba(26, 27, 38, 0.8)',
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: 'rgba(156, 163, 175, 0.4)',
     shadowColor: '#000',
     shadowOffset: {
@@ -70,18 +83,32 @@ const styles = StyleSheet.create({
   playerCardFolded: {
     opacity: 0.5,
   },
+  playerCardToAct: {
+    borderColor: '#b794f6',
+    borderWidth: 2,
+  },
   playerInfo: {
     flexDirection: 'column',
-    gap: 6,
-    width: 60,
+    gap: 4,
+    width: 80,
+  },
+  positionText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#9ca3af',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   playerName: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     color: '#ffffff',
   },
   playerNameFolded: {
     color: '#6b7280',
+  },
+  playerNameCurrent: {
+    color: '#60a5fa',
   },
   chipsContainer: {
     flexDirection: 'row',
@@ -89,20 +116,20 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   chipsText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
     color: '#d1d5db',
   },
   betCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   betText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: '#ffffff',
   },

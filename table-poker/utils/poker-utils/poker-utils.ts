@@ -11,12 +11,9 @@ export const mapCard = (card: any) => {
     spades: 'spade',
   };
 
-  const valueMap: { [key: string]: string } = {
-    '10': '10',
-  };
-
   const suit = suitMap[card.suit];
-  const value = (valueMap[card.rank] || card.rank) as any;
+  // Convert 'T' to '10', otherwise use the rank as-is
+  const value = (card.rank === 'T' ? '10' : card.rank) as any;
 
   return { suit, value };
 };
