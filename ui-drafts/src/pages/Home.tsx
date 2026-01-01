@@ -1,4 +1,4 @@
-import { Link } from "wouter"
+import { Link } from "wouter";
 
 const Home = () => {
   return (
@@ -23,10 +23,26 @@ const Home = () => {
           <Link href="/host-device-ui">
             <a className="text-blue-500 hover:underline">Host Device UI</a>
           </Link>
+          <hr className="my-4 border-gray-600" />
+          <p className="text-sm text-gray-400 mb-2">
+            No-Chip Poker Home Screens
+          </p>
+          <Link href="/home-screen-1">
+            <a className="text-blue-500 hover:underline">Home Screen 1</a>
+          </Link>
+          <Link href="/home-screen-2">
+            <a className="text-blue-500 hover:underline">Home Screen 2</a>
+          </Link>
+          <Link href="/home-screen-3">
+            <a className="text-blue-500 hover:underline">Home Screen 3</a>
+          </Link>
+          <Link href="/home-screen-4">
+            <a className="text-blue-500 hover:underline">Home Screen 4</a>
+          </Link>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Home
+export default Home;

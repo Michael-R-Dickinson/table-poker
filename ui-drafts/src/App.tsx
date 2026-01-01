@@ -1,11 +1,15 @@
-import { Route, Switch } from "wouter"
-import Design1 from "./pages/Design1/Design1"
-import Home from "./pages/Home"
-import Pulse from "./pages/Pulse"
-import NotFoundPage from "./pages/NotFoundPage"
-import MobilePokerPage from "./pages/MobilePoker"
-import PlayingCards from "./pages/PlayingCards/PlayingCards"
-import HostDeviceUI from "./pages/HostDeviceUI/HostDeviceUI"
+import { Route, Switch } from "wouter";
+import Design1 from "./pages/Design1/Design1";
+import Home from "./pages/Home";
+import Pulse from "./pages/Pulse";
+import NotFoundPage from "./pages/NotFoundPage";
+import MobilePokerPage from "./pages/MobilePoker";
+import PlayingCards from "./pages/PlayingCards/PlayingCards";
+import HostDeviceUI from "./pages/HostDeviceUI/HostDeviceUI";
+import HomeScreen1 from "./pages/HomeScreen1";
+import HomeScreen2 from "./pages/HomeScreen2";
+import HomeScreen3 from "./pages/HomeScreen3";
+import HomeScreen4 from "./pages/HomeScreen4";
 
 function App() {
   return (
@@ -28,9 +32,21 @@ function App() {
       <Route path="/host-device-ui">
         <HostDeviceUI />
       </Route>
+      <Route path="/home-screen-1">
+        <HomeScreen1 />
+      </Route>
+      <Route path="/home-screen-2">
+        <HomeScreen2 />
+      </Route>
+      <Route path="/home-screen-3">
+        <HomeScreen3 />
+      </Route>
+      <Route path="/home-screen-4">
+        <HomeScreen4 />
+      </Route>
       <NotFoundPage />
     </Switch>
-  )
+  );
 }
 
-export default App
+export default App;
