@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Action } from '@/types/game-state';
@@ -45,6 +46,8 @@ export function MobilePokerGame({
   amountToCall,
   winningInfo,
 }: MobilePokerGameProps) {
+  const [inBettingMode, setInBettingMode] = useState(false);
+
   return (
     <View style={styles.container}>
       {/* Background gradient creates depth from top to bottom */}
@@ -91,6 +94,7 @@ export function MobilePokerGame({
               onAction={onAction}
               chipRange={chipRange}
               amountToCall={amountToCall}
+              onBettingModeChange={setInBettingMode}
             />
           </View>
 
@@ -102,30 +106,32 @@ export function MobilePokerGame({
           )}
 
           {/* Player's hole cards with fan effect */}
-          <View style={styles.playerCardsContainer}>
-            {playerCards.map((card, index) => {
-              const totalCards = playerCards.length;
-              const middleIndex = (totalCards - 1) / 2;
-              const offsetFromMiddle = index - middleIndex;
-              const rotation = `${offsetFromMiddle * 10}deg`;
-              const translateX = offsetFromMiddle * 30;
+          {!inBettingMode && (
+            <View style={styles.playerCardsContainer}>
+              {playerCards.map((card, index) => {
+                const totalCards = playerCards.length;
+                const middleIndex = (totalCards - 1) / 2;
+                const offsetFromMiddle = index - middleIndex;
+                const rotation = `${offsetFromMiddle * 10}deg`;
+                const translateX = offsetFromMiddle * 30;
 
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.cardWrapper,
-                    {
-                      transform: [{ translateX }, { rotate: rotation }],
-                      zIndex: index,
-                    },
-                  ]}
-                >
-                  <Card rank={card.rank} suit={card.suit} size="medium" />
-                </View>
-              );
-            })}
-          </View>
+                return (
+                  <View
+                    key={index}
+                    style={[
+                      styles.cardWrapper,
+                      {
+                        transform: [{ translateX }, { rotate: rotation }],
+                        zIndex: index,
+                      },
+                    ]}
+                  >
+                    <Card rank={card.rank} suit={card.suit} size="medium" />
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
           {/* Player's chip count */}
           <View style={styles.playerBankContainer}>
