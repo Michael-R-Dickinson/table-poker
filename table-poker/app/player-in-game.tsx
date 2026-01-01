@@ -1,22 +1,14 @@
-import {
-  StyleSheet,
-  View,
-  TouchableOpacity,
-  Alert,
-  SafeAreaView,
-  BackHandler,
-} from 'react-native';
+import { MobilePokerGame } from '@/components/mobile-poker-draft/mobile-poker-game';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { useLocalSearchParams, router } from 'expo-router';
-import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
-import { useWebRTCPlayer } from '@/hooks/player/use-webrtc-player';
 import { usePlayerGameplay } from '@/hooks/player/use-player-gameplay';
-import { useMemo, useEffect } from 'react';
-import { logger } from '@/utils/shared/logger';
-import { MobilePokerGame } from '@/components/mobile-poker-draft/mobile-poker-game';
+import { useWebRTCPlayer } from '@/hooks/player/use-webrtc-player';
+import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
 import { mapGameStateToUI } from '@/utils/player/map-game-state-to-ui';
-import { Ionicons } from '@expo/vector-icons';
+import { logger } from '@/utils/shared/logger';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useMemo } from 'react';
+import { Alert, BackHandler, SafeAreaView, StyleSheet } from 'react-native';
 
 export default function PlayerInGameScreen() {
   const params = useLocalSearchParams();
@@ -88,13 +80,6 @@ export default function PlayerInGameScreen() {
   if (!uiState) {
     return (
       <SafeAreaView style={styles.container}>
-        <TouchableOpacity
-          style={styles.leaveButton}
-          onPress={handleLeaveGame}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="arrow-back" size={28} color="#fff" />
-        </TouchableOpacity>
         <ThemedView style={styles.waitingContainer}>
           <ThemedText style={styles.waitingTitle}>
             {connectionState === 'connected' ? 'Connected' : 'Connecting...'}
@@ -111,13 +96,6 @@ export default function PlayerInGameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity
-        style={styles.leaveButton}
-        onPress={handleLeaveGame}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <Ionicons name="arrow-back" size={28} color="#fff" />
-      </TouchableOpacity>
       <MobilePokerGame
         opponents={uiState.opponents}
         playerCards={uiState.playerCards}
@@ -137,26 +115,6 @@ export default function PlayerInGameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  leaveButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    zIndex: 1000,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 25,
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   waitingContainer: {
     flex: 1,
