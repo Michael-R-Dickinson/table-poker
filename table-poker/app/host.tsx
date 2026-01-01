@@ -22,8 +22,8 @@ const { width } = Dimensions.get('window');
 
 export default function HostScreen() {
   const [gameCode, setGameCode] = useState('');
-  const [smallBlind, setSmallBlind] = useState('5');
-  const [bigBlind, setBigBlind] = useState('10');
+  const [smallBlind, setSmallBlind] = useState('10');
+  const [bigBlind, setBigBlind] = useState('20');
   const [buyIn, setBuyIn] = useState('1000');
   const [orderedPlayers, setOrderedPlayers] = useState<string[]>([]);
 
