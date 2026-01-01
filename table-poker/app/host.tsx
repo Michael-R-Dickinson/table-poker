@@ -7,6 +7,7 @@ import {
   Text,
   Pressable,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
@@ -133,7 +134,11 @@ export default function HostScreen() {
         <Text style={[styles.cardSuit, styles.clubsPosition]}>♣</Text>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Host Game</Text>
@@ -214,6 +219,7 @@ export default function HostScreen() {
                   <Text style={styles.playerText}>{item}</Text>
                 </View>
               )}
+              scrollEnabled={false}
             />
           )}
         </View>
@@ -249,7 +255,7 @@ export default function HostScreen() {
             <Text style={styles.secondaryButtonText}>Stop Hosting</Text>
           </Pressable>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -292,6 +298,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 24,
@@ -410,7 +418,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   playersContainer: {
-    flex: 1,
     marginBottom: 20,
   },
   emptyText: {
