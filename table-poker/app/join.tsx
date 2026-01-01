@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, Button, TextInput } from 'react-native';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { StyleSheet, View, TextInput, Text, Pressable, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSignalingConnection } from '@/hooks/shared/use-signaling-connection';
 import { useWebRTCPlayer } from '@/hooks/player/use-webrtc-player';
 import { router } from 'expo-router';
@@ -9,6 +8,8 @@ import { logger } from '@/utils/shared/logger';
 import { HOST_PLAYER_ID } from '@/constants/signaling';
 import { ROUTES } from '@/constants/routes';
 import { DEBUG_MODE } from '@/constants/config';
+
+const { width } = Dimensions.get('window');
 
 export default function JoinScreen() {
   const [gameCode, setGameCode] = useState(DEBUG_MODE ? 'AAAAAA' : '');
@@ -154,223 +155,442 @@ export default function JoinScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">Join Game</ThemedText>
-        <Button title="Back" onPress={() => router.back()} />
-      </ThemedView>
+    <View style={styles.container}>
+      {/* Purple ambient glow */}
+      <LinearGradient
+        colors={['rgba(138, 130, 255, 0.15)', 'transparent']}
+        style={styles.purpleGlow}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.7 }}
+      />
 
-      {!isJoining ? (
-        <ThemedView style={styles.setupContainer}>
-          <ThemedText type="subtitle">Join a Game</ThemedText>
+      {/* Decorative card suits background */}
+      <View style={styles.decorativeBackground}>
+        <Text style={[styles.cardSuit, styles.heartsPosition]}>♣</Text>
+        <Text style={[styles.cardSuit, styles.diamondsPosition]}>♦</Text>
+      </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Your Name"
-            placeholderTextColor="#999"
-            value={playerName}
-            onChangeText={setPlayerName}
-          />
+      <View style={styles.content}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Join Game</Text>
+        </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Game Code"
-            placeholderTextColor="#999"
-            value={gameCode}
-            onChangeText={(text) => setGameCode(text.toUpperCase())}
-            maxLength={6}
-            autoCapitalize="characters"
-          />
-
-          <Button title="Join Game" onPress={handleJoinGame} />
-        </ThemedView>
-      ) : (
-        <ThemedView style={styles.gameContainer}>
-          <ThemedView style={styles.statusContainer}>
-            <ThemedText type="subtitle">Connection Status</ThemedText>
-
-            <View style={styles.connectionStatus}>
-              <View
-                style={[
-                  styles.statusIndicator,
-                  { backgroundColor: getSignalingStatusColor() },
-                ]}
+        {!isJoining ? (
+          <View style={styles.setupContainer}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>YOUR NAME</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your name"
+                placeholderTextColor="#6b7280"
+                value={playerName}
+                onChangeText={setPlayerName}
               />
-              <ThemedText>Signaling: {signalingState}</ThemedText>
             </View>
 
-            <View style={styles.connectionStatus}>
-              <View
-                style={[
-                  styles.statusIndicator,
-                  { backgroundColor: getWebRTCStatusColor() },
-                ]}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>GAME CODE</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter 6-digit code"
+                placeholderTextColor="#6b7280"
+                value={gameCode}
+                onChangeText={(text) => setGameCode(text.toUpperCase())}
+                maxLength={6}
+                autoCapitalize="characters"
               />
-              <ThemedText>WebRTC: {webrtcState}</ThemedText>
             </View>
 
-            {error && <ThemedText style={styles.errorText}>Error: {error}</ThemedText>}
-          </ThemedView>
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryButton,
+                pressed && styles.buttonPressed,
+              ]}
+              onPress={handleJoinGame}
+            >
+              <Text style={styles.primaryButtonText}>Join Game</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.gameContainer}>
+            {/* Connection Status */}
+            <View style={styles.statusContainer}>
+              <View style={styles.statusRow}>
+                <View
+                  style={[
+                    styles.statusIndicator,
+                    { backgroundColor: getSignalingStatusColor() },
+                  ]}
+                />
+                <Text style={styles.statusText}>Signaling: {signalingState}</Text>
+              </View>
 
-          <ThemedView style={styles.gameInfoContainer}>
-            <ThemedText type="subtitle">Game Code</ThemedText>
-            <ThemedText type="title" style={styles.gameCodeText}>
-              {gameCode}
-            </ThemedText>
-            <ThemedText style={styles.playerNameText}>
-              Playing as: {playerName}
-            </ThemedText>
-          </ThemedView>
+              <View style={styles.statusRow}>
+                <View
+                  style={[
+                    styles.statusIndicator,
+                    { backgroundColor: getWebRTCStatusColor() },
+                  ]}
+                />
+                <Text style={styles.statusText}>WebRTC: {webrtcState}</Text>
+              </View>
 
-          {joinError ? (
-            <ThemedView style={styles.errorContainer}>
-              <ThemedText style={styles.errorTitleText}>Connection Failed</ThemedText>
-              <ThemedText style={styles.errorMessageText}>{joinError}</ThemedText>
-              <View style={styles.buttonSpacer} />
-              <Button
-                title="Try Again"
-                onPress={() => {
-                  setJoinError(null);
-                  setIsJoining(false);
-                }}
-              />
-            </ThemedView>
-          ) : isJoined ? (
-            <ThemedView style={styles.connectedContainer}>
-              <ThemedText style={styles.connectedText}>Connected to Host!</ThemedText>
-              <ThemedText style={styles.instructionText}>
-                Waiting for game to start...
-              </ThemedText>
-            </ThemedView>
-          ) : (
-            <ThemedView style={styles.connectingContainer}>
-              <ThemedText style={styles.connectingText}>Connecting to host...</ThemedText>
-              <ThemedText style={styles.instructionText}>
-                Please wait while we establish connection
-              </ThemedText>
-            </ThemedView>
-          )}
+              {error && <Text style={styles.errorText}>Error: {error}</Text>}
+            </View>
 
-          <ThemedView style={styles.actionsContainer}>
-            <Button title="Test Send" onPress={handleTestSend} disabled={!isJoined} />
-            <View style={styles.buttonSpacer} />
-            <Button title="Leave Game" onPress={handleLeaveGame} color="#F44336" />
-          </ThemedView>
-        </ThemedView>
-      )}
-    </ThemedView>
+            {/* Game Info */}
+            <View style={styles.gameInfoContainer}>
+              <Text style={styles.gameCodeLabel}>GAME CODE</Text>
+              <Text style={styles.gameCodeText}>{gameCode}</Text>
+              <Text style={styles.playerNameText}>Playing as: {playerName}</Text>
+            </View>
+
+            {/* Connection Status Messages */}
+            {joinError ? (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorTitleText}>Connection Failed</Text>
+                <Text style={styles.errorMessageText}>{joinError}</Text>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.secondaryButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={() => {
+                    setJoinError(null);
+                    setIsJoining(false);
+                  }}
+                >
+                  <Text style={styles.secondaryButtonText}>Try Again</Text>
+                </Pressable>
+              </View>
+            ) : isJoined ? (
+              <View style={styles.connectedContainer}>
+                <Text style={styles.connectedText}>Connected to Host</Text>
+                <Text style={styles.instructionText}>Waiting for game to start...</Text>
+              </View>
+            ) : (
+              <View style={styles.connectingContainer}>
+                <Text style={styles.connectingText}>Connecting to host...</Text>
+                <Text style={styles.instructionText}>
+                  Please wait while we establish connection
+                </Text>
+              </View>
+            )}
+
+            {/* Action Buttons */}
+            <View style={styles.actionsContainer}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.testButton,
+                  !isJoined && styles.testButtonDisabled,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={handleTestSend}
+                disabled={!isJoined}
+              >
+                <Text
+                  style={[
+                    styles.testButtonText,
+                    !isJoined && styles.testButtonTextDisabled,
+                  ]}
+                >
+                  Test Send
+                </Text>
+              </Pressable>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.leaveButton,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={handleLeaveGame}
+              >
+                <Text style={styles.leaveButtonText}>Leave Game</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    backgroundColor: '#050508',
+    paddingTop: 40,
+  },
+  purpleGlow: {
+    position: 'absolute',
+    top: 0,
+    left: width / 2 - 300,
+    width: 600,
+    height: '100%',
+    opacity: 0.4,
+  },
+  decorativeBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.03,
+  },
+  cardSuit: {
+    position: 'absolute',
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  heartsPosition: {
+    top: 60,
+    right: 50,
+    fontSize: 88,
+  },
+  diamondsPosition: {
+    bottom: 100,
+    left: 70,
+    fontSize: 96,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 24,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 32,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    letterSpacing: -0.5,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonPressed: {
+    opacity: 0.6,
+  },
+  backButtonText: {
+    fontSize: 32,
+    color: '#ffffff',
+    marginTop: -4,
   },
   setupContainer: {
-    gap: 15,
+    gap: 24,
+  },
+  inputContainer: {
+    gap: 8,
+  },
+  inputLabel: {
+    fontSize: 12,
+    color: '#9ca3af',
+    letterSpacing: 2,
+    marginLeft: 4,
+  },
+  input: {
+    height: 56,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    fontSize: 18,
+    color: '#ffffff',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  },
+  primaryButton: {
+    backgroundColor: '#151524',
+    borderWidth: 1,
+    borderColor: 'rgba(138, 130, 255, 0.3)',
+    borderRadius: 16,
+    paddingVertical: 18,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: 'rgba(90, 60, 255, 0.2)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  primaryButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
   },
   gameContainer: {
     flex: 1,
     gap: 20,
   },
   statusContainer: {
-    gap: 8,
+    gap: 12,
+    padding: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
-  connectionStatus: {
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#d1d5db',
+    textTransform: 'capitalize',
   },
   errorText: {
-    color: '#F44336',
+    fontSize: 13,
+    color: '#ef4444',
+    marginTop: 4,
   },
   gameInfoContainer: {
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
+    padding: 24,
+    backgroundColor: '#151524',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(138, 130, 255, 0.2)',
+  },
+  gameCodeLabel: {
+    fontSize: 12,
+    color: '#9ca3af',
+    letterSpacing: 2,
+    marginBottom: 8,
   },
   gameCodeText: {
-    fontSize: 36,
+    fontSize: 48,
     fontWeight: 'bold',
-    letterSpacing: 6,
-    marginVertical: 10,
+    color: '#ffffff',
+    letterSpacing: 12,
+    marginVertical: 8,
   },
   playerNameText: {
-    fontSize: 16,
-    color: '#666',
+    fontSize: 15,
+    color: '#6b7280',
+    marginTop: 4,
   },
   connectedContainer: {
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#E8F5E9',
-    borderRadius: 10,
+    padding: 24,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
   },
   connectedText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#4CAF50',
+    color: '#10b981',
   },
   connectingContainer: {
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FFF3E0',
-    borderRadius: 10,
+    padding: 24,
+    backgroundColor: 'rgba(251, 146, 60, 0.1)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(251, 146, 60, 0.3)',
   },
   connectingText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FF9800',
+    color: '#fb923c',
   },
   errorContainer: {
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FFEBEE',
-    borderRadius: 10,
+    padding: 24,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    gap: 16,
   },
   errorTitleText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#F44336',
+    color: '#ef4444',
   },
   errorMessageText: {
     fontSize: 14,
-    color: '#D32F2F',
-    marginTop: 8,
+    color: '#f87171',
     textAlign: 'center',
   },
   instructionText: {
     fontSize: 14,
-    color: '#666',
+    color: '#9ca3af',
     marginTop: 8,
+    textAlign: 'center',
   },
   actionsContainer: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
-  input: {
-    height: 50,
+  testButton: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    color: '#000',
-    backgroundColor: '#fff',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
   },
-  buttonSpacer: {
-    width: 10,
+  testButtonDisabled: {
+    opacity: 0.4,
+  },
+  testButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#d1d5db',
+  },
+  testButtonTextDisabled: {
+    color: '#6b7280',
+  },
+  leaveButton: {
+    flex: 1,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  leaveButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#ef4444',
+  },
+  secondaryButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  secondaryButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#d1d5db',
+  },
+  buttonPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.98 }],
   },
 });
