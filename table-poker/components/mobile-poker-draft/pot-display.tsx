@@ -28,7 +28,7 @@ export function PotDisplay({ currentBet, playerCurrentBet }: PotDisplayProps) {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 160,
+    top: 200,
     left: 0,
     right: 0,
     flexDirection: 'column',
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
-    marginTop: '15%',
+    marginTop: '10%',
   },
   playerBetAmount: {
     fontSize: 16,
