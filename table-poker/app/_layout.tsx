@@ -9,6 +9,7 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        <Stack.Screen name="host" options={{ headerShown: false }} />
         <Stack.Screen name="host-in-game" options={{ headerShown: false }} />
         <Stack.Screen name="player-in-game" options={{ headerShown: false }} />
       </Stack>

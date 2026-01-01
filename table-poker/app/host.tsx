@@ -137,15 +137,6 @@ export default function HostScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Host Game</Text>
-          <Pressable
-            style={({ pressed }) => [
-              styles.backButton,
-              pressed && styles.backButtonPressed,
-            ]}
-            onPress={() => router.back()}
-          >
-            <Text style={styles.backButtonText}>←</Text>
-          </Pressable>
         </View>
 
         {/* Connection Status */}
