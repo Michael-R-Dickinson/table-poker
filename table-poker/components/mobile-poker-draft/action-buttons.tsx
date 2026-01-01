@@ -87,158 +87,167 @@ export function ActionButtons({
     outputRange: [0, 200],
   });
 
-  if (bettingMode && chipRange) {
-    return (
-      <Animated.View style={[styles.container, { height: animatedHeight }]}>
-        <View style={styles.bettingModeContent}>
-          <View style={styles.amountDisplay}>
-            <Text style={styles.amountLabel}>
-              {bettingMode === 'bet' ? 'Bet Amount' : 'Raise To'}
-            </Text>
-            <Text style={styles.amountValue}>{currentAmount}</Text>
-          </View>
-
-          <View style={styles.incrementButtons}>
-            <Pressable
-              onPress={() => incrementAmount(5)}
-              style={({ pressed }) => [
-                styles.incrementButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.incrementText}>+5</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => incrementAmount(10)}
-              style={({ pressed }) => [
-                styles.incrementButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.incrementText}>+10</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => incrementAmount(25)}
-              style={({ pressed }) => [
-                styles.incrementButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.incrementText}>+25</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => incrementAmount(50)}
-              style={({ pressed }) => [
-                styles.incrementButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.incrementText}>+50</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => incrementAmount(100)}
-              style={({ pressed }) => [
-                styles.incrementButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.incrementText}>+100</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.allInButtonContainer}>
-            <Pressable
-              onPress={setToAllIn}
-              style={({ pressed }) => [
-                styles.allInButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.allInText}>All In</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.confirmButtons}>
-            <Pressable
-              onPress={exitBettingMode}
-              style={({ pressed }) => [
-                styles.confirmButton,
-                styles.cancelButton,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Ionicons name="close" size={16} color="#f87171" />
-              <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-            <Pressable
-              onPress={confirmBet}
-              style={({ pressed }) => [
-                styles.confirmButton,
-                styles.confirmButtonGreen,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Ionicons name="checkmark" size={16} color="#4ade80" />
-              <Text style={styles.confirmText}>Confirm</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Animated.View>
-    );
-  }
+  const animatedOpacity = heightAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
 
   return (
-    <View style={styles.container}>
-      {availableActions.includes('fold') && (
-        <Pressable
-          onPress={() => onAction('fold')}
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-        >
-          <Ionicons name="close" size={16} color="#f87171" />
-          <Text style={styles.foldText}>Fold</Text>
-        </Pressable>
+    <>
+      {bettingMode && chipRange && (
+        <Animated.View style={[styles.container, { height: animatedHeight }]}>
+          <Animated.View
+            style={[styles.bettingModeContent, { opacity: animatedOpacity }]}
+          >
+            <View style={styles.amountDisplay}>
+              <Text style={styles.amountLabel}>
+                {bettingMode === 'bet' ? 'Bet Amount' : 'Raise To'}
+              </Text>
+              <Text style={styles.amountValue}>{currentAmount}</Text>
+            </View>
+
+            <View style={styles.incrementButtons}>
+              <Pressable
+                onPress={() => incrementAmount(5)}
+                style={({ pressed }) => [
+                  styles.incrementButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.incrementText}>+5</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => incrementAmount(10)}
+                style={({ pressed }) => [
+                  styles.incrementButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.incrementText}>+10</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => incrementAmount(25)}
+                style={({ pressed }) => [
+                  styles.incrementButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.incrementText}>+25</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => incrementAmount(50)}
+                style={({ pressed }) => [
+                  styles.incrementButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.incrementText}>+50</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => incrementAmount(100)}
+                style={({ pressed }) => [
+                  styles.incrementButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.incrementText}>+100</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.allInButtonContainer}>
+              <Pressable
+                onPress={setToAllIn}
+                style={({ pressed }) => [
+                  styles.allInButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.allInText}>All In</Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.confirmButtons}>
+              <Pressable
+                onPress={exitBettingMode}
+                style={({ pressed }) => [
+                  styles.confirmButton,
+                  styles.cancelButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Ionicons name="close" size={16} color="#f87171" />
+                <Text style={styles.cancelText}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={confirmBet}
+                style={({ pressed }) => [
+                  styles.confirmButton,
+                  styles.confirmButtonGreen,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Ionicons name="checkmark" size={16} color="#4ade80" />
+                <Text style={styles.confirmText}>Confirm</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </Animated.View>
       )}
 
-      {availableActions.includes('check') && (
-        <Pressable
-          onPress={() => onAction('check')}
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-        >
-          <Ionicons name="checkmark-done" size={16} color="#60a5fa" />
-          <Text style={styles.checkText}>Check</Text>
-        </Pressable>
-      )}
+      {!bettingMode && (
+        <View style={styles.container}>
+          {availableActions.includes('fold') && (
+            <Pressable
+              onPress={() => onAction('fold')}
+              style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            >
+              <Ionicons name="close" size={16} color="#f87171" />
+              <Text style={styles.foldText}>Fold</Text>
+            </Pressable>
+          )}
 
-      {availableActions.includes('call') && amountToCall !== null && (
-        <Pressable
-          onPress={() => onAction('call')}
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-        >
-          <Ionicons name="checkmark-done" size={16} color="#60a5fa" />
-          <Text style={styles.callText}>Call {amountToCall}</Text>
-        </Pressable>
-      )}
+          {availableActions.includes('check') && (
+            <Pressable
+              onPress={() => onAction('check')}
+              style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            >
+              <Ionicons name="checkmark-done" size={16} color="#60a5fa" />
+              <Text style={styles.checkText}>Check</Text>
+            </Pressable>
+          )}
 
-      {availableActions.includes('bet') && chipRange && (
-        <Pressable
-          onPress={() => enterBettingMode('bet')}
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-        >
-          <Ionicons name="trending-up" size={16} color="#4ade80" />
-          <Text style={styles.betText}>Bet</Text>
-        </Pressable>
-      )}
+          {availableActions.includes('call') && amountToCall !== null && (
+            <Pressable
+              onPress={() => onAction('call')}
+              style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            >
+              <Ionicons name="checkmark-done" size={16} color="#60a5fa" />
+              <Text style={styles.callText}>Call {amountToCall}</Text>
+            </Pressable>
+          )}
 
-      {availableActions.includes('raise') && chipRange && (
-        <Pressable
-          onPress={() => enterBettingMode('raise')}
-          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-        >
-          <Ionicons name="trending-up" size={16} color="#4ade80" />
-          <Text style={styles.raiseText}>Raise</Text>
-        </Pressable>
+          {availableActions.includes('bet') && chipRange && (
+            <Pressable
+              onPress={() => enterBettingMode('bet')}
+              style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            >
+              <Ionicons name="trending-up" size={16} color="#4ade80" />
+              <Text style={styles.betText}>Bet</Text>
+            </Pressable>
+          )}
+
+          {availableActions.includes('raise') && chipRange && (
+            <Pressable
+              onPress={() => enterBettingMode('raise')}
+              style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
+            >
+              <Ionicons name="trending-up" size={16} color="#4ade80" />
+              <Text style={styles.raiseText}>Raise</Text>
+            </Pressable>
+          )}
+        </View>
       )}
-    </View>
+    </>
   );
 }
 
